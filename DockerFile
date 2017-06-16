@@ -1,0 +1,14 @@
+FROM arm64v8/alpine
+
+RUN apk add --no-cache nodejs && npm install pm2 -g
+
+ENV NODE_ENV production
+COPY process.yml .
+COPY package.json .
+RUN npm install
+
+COPY app/ .
+
+CMD ["pm2-docker", "start", "--auto-exit", "--env", "production", "process.yml"]
+
+EXPOSE 3000

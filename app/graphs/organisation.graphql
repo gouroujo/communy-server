@@ -1,0 +1,99 @@
+extend type Query {
+
+  organisations (
+    joined: Boolean
+    limit: Int
+    offset: Int
+    status: String
+  ): [Organisation!]
+
+  organisation (
+    id: ID
+  ): Organisation!
+
+  createOrganisation: Organisation!
+}
+
+extend type Mutation {
+
+  createOrganisation (
+    id: ID
+    input: CreateOrganisationInput!
+  ): Organisation!
+
+  mutateOrganisation (
+    id: ID!
+    input: OrganisationInput!
+  ): Organisation!
+
+  deleteOrganisation (
+    id: ID!,
+  ): Organisation
+
+  addUserToOrganisation (
+    id: ID!
+    input: AddUserToOrganisationInput!
+  ) : Organisation!
+
+  joinOrganisation (
+    id: ID!
+  ) : Organisation!
+
+}
+
+type Organisation {
+  id: ID!
+  title: String
+  description: String
+  logoUrl: String
+  coverUrl: String
+  coverUploadOpts: String
+
+  status: String
+  joinedAt: DateTime
+
+  events (
+    before: Date
+    after: Date
+    limit: Int
+  ): [Event!]
+
+  nevents (
+    before: Date
+    after: Date
+  ): Int!
+
+  users (
+    limit: Int
+    status: String
+  ): [OrganisationUser!]
+
+  nusers(
+    status: String
+  ): Int!
+}
+type OrganisationUser {
+  ref: ID!
+  fullname: String
+  avatarUrl: String
+  email: String
+  status: String
+}
+input CreateOrganisationInput {
+  title: String!
+  description: String
+  logoUrl: String
+  coverUrl: String
+}
+
+input OrganisationInput {
+  title: String!
+  description: String
+  logoUrl: String
+  coverUrl: String
+}
+
+input AddUserToOrganisationInput {
+  email: String!
+  status: String
+}

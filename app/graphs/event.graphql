@@ -1,0 +1,75 @@
+extend type Query {
+  events (
+    organisationId: ID
+    limit: Int
+    status: String
+    offset: Int
+    after: DateTime
+    before: DateTime
+  ): [Event!]
+
+  event (
+    id: ID!
+  ): Event!
+}
+
+extend type Mutation {
+  createEvent (
+    input: CreateEventInput!
+  ): Event!
+
+  deleteEvent (
+    id: ID!
+  ): Event
+
+  updateEvent (
+    id: ID!
+    input: UpdateEventInput!
+  ): Event!
+
+  participateToEvent (
+    id: ID!
+    input: ParticipateToEventInput!
+  ): Event
+
+}
+
+type EventUser {
+  id: ID!
+  fullname: String
+  avatarUrl: String
+  status: String
+}
+
+type Event {
+  id: ID!
+  title: String!
+  description: String
+  startTime: DateTime!
+  endTime: DateTime!
+  organisation: Organisation!
+  nusers: Int!
+  users: [EventUser!]
+  address: Address
+  status(userId: ID): String
+}
+
+input CreateEventInput {
+  title: String!
+  description: String
+  startTime: DateTime!
+  endTime: DateTime!
+  organisationId: ID!
+}
+
+input UpdateEventInput {
+  title: String!
+  description: String
+  startTime: DateTime!
+  endTime: DateTime!
+}
+
+input ParticipateToEventInput {
+  userId: ID!
+  status: String
+}

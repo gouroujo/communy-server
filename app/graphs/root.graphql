@@ -1,0 +1,12 @@
+type Query {
+  isAuthenticated: Boolean!
+  version: String
+}
+
+type Mutation {
+  version: String
+}
+
+scalar Date
+scalar DateTime
+scalar Time
