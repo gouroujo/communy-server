@@ -2,6 +2,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const { graphqlExpress, graphiqlExpress } = require('graphql-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
+const OpticsAgent = require('optics-agent');
 
 const config = require('./config');
 const { models } = require('./db');
@@ -30,10 +31,15 @@ module.exports = (app) => {
     resolvers: resolvers,
   });
 
-  const userAuth = (req, res, next) => {
-    if (!req.headers.authorization) return next();
+  // GraphQL Optics
+  OpticsAgent.instrumentSchema(executableSchema)
+  app.use(OpticsAgent.middleware());
 
-    return models.User.findByToken(req.headers.authorization)
+  const userAuth = (req, res, next) => {
+    const token = req.headers.authorization || req.body.variables && req.body.variables.token;
+    if (!token) return next();
+
+    return models.User.findByToken(token)
       .then(user => {
         res.locals.user = user;
         return next();
@@ -52,6 +58,7 @@ module.exports = (app) => {
       return {
         schema: executableSchema,
         context: {
+          opticsContext: OpticsAgent.context(req),
           currentUser: res.locals.user,
           checkOrgPermission: checkOrgPermission
         }

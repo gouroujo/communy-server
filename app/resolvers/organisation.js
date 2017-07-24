@@ -1,29 +1,24 @@
 const { omit, difference } = require('lodash');
 const { models, mongoose } = require('../db');
-const getFieldNames = require('./utils/getFields');
-const filterEvents = require ('./utils/filterEvents');
-const signCloudinary = require('./utils/signCloudinary');
-const { orgStatus, CLOUDINARY_KEY } = require('../config');
+
+const getFieldNames = require('../utils/getFields');
+const filterEvents = require ('../utils/filterEvents');
+const signCloudinary = require('../utils/signCloudinary');
+const minifyUser = require('../utils/minifyUser');
+
+const setRoleInOrganisation = require('../tasks/setRoleInOrganisation');
+const registerToOrganisation = require('../tasks/registerToOrganisation');
+
+const { orgMemberStatus, orgStatus, CLOUDINARY_KEY } = require('../config');
 
 module.exports = {
-  OrganisationUser: {
-    ref(user) {
-      return user._id
-    },
-    status(user) {
-      return user.st;
-    },
-    fullname(user) {
-      return user.fn
-    },
-    avatarUrl(user) {
-      return user.av
-    },
-    email(user) {
-      return user.em;
-    },
-  },
   Organisation: {
+    logo(organisation) {
+      return organisation.logo || organisation.logoUrl;
+    },
+    cover(organisation) {
+      return organisation.cover || organisation.coverUrl;
+    },
     id(organisation) {
       return organisation._id || organisation.id;
     },
@@ -31,33 +26,39 @@ module.exports = {
       if (!organisation.users) return 0;
       return organisation.users.length;
     },
-    status(organisation, args, { currentUser }) {
-      if(!currentUser) return null;
-      if (organisation.status) return organisation.status;
-      const org = currentUser.organisations.find(o => String(o._id) == organisation._id);
-      return org ? org.status : null;
+    role(organisation, args, { currentUser }) {
+      if (!currentUser) return null;
+      if (organisation.role) return organisation.role;
+
+      const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
+      return org ? org.role : null;
+    },
+    waiting_ack(organisation, args, { currentUser }) {
+      if (!currentUser) return false;
+      if (organisation.ack === false) return true;
+
+      const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
+      return org ? !org.ack : false
+    },
+    waiting_confirm(organisation, args, { currentUser }) {
+      if (!currentUser) return false;
+      if (organisation.ack && !organisation.role) return true;
+
+      const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
+      return org ? (org.ack && !org.role) : false
+    },
+    joined(organisation, args, { currentUser }) {
+      if (!currentUser) return false;
+      if (organisation.ack && organisation.role) return true;
+
+      const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
+      return org ? !!(org.ack && org.role) : false
     },
     joinedAt(organisation) {
       return organisation.t || null;
     },
     users(organisation, args, ctx, info) {
       return organisation.users;
-      // const fields = difference(getFieldNames(info), [
-      //   'id', 'fullname', 'email', 'avatarUrl', 'status'
-      // ])
-      // if (fields.length === 0) {
-      //   return organisation.users.map(u => ({
-      //     id: u._id,
-      //     fullname: u.fn,
-      //     avatarUrl: u.av,
-      //     email: u.em,
-      //     status: u.st,
-      //   }))
-      // } else {
-      //   return models.User.find({
-      //     _id: { $in: organisation.users.map(u => u._id ) }
-      //   })
-      // }
     },
     nevents(organisation) {
       if (!organisation.events) return 0;
@@ -104,18 +105,15 @@ module.exports = {
       }));
     }
   },
+
   Query: {
-    createOrganisation() {
-      return {
-        _id: mongoose.Types.ObjectId()
-      };
-    },
     organisations(_, { status, limit, offset }) {
       return models.Organisation.find({ status })
         .skip(offset)
         .limit(limit)
         .lean();
     },
+
     organisation(_, { id }) {
       return models.Organisation.findById(id).lean()
         .then(res => {
@@ -126,68 +124,55 @@ module.exports = {
         });
     },
   },
+
   Mutation: {
-    createOrganisation(_, { input }) {
-      const organisation = new models.Organisation(input)
-      return organisation.save();
+    createOrganisation(_, { input }, { currentUser }) {
+      const organisation = new models.Organisation(input);
+
+      return minifyUser(currentUser, {
+        role: orgStatus.ADMIN,
+        ack: false,
+      }).then(u => {
+        organisation.nusers = 1;
+        organisation.users = [u];
+        return organisation.save();
+      });
     },
-    mutateOrganisation(_, { id, input }) {
-      console.log(id)
+
+    editOrganisation(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${id}:edit`)) return new Error('Forbidden');
+
       return models.Organisation.findByIdAndUpdate(
         id,
         input,
-        { new: true, upsert: true }
+        { new: true }
       )
     },
-    deleteOrganisation(_, { id }) {
+
+    deleteOrganisation(parent, { id }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${id}:delete`)) return new Error('Forbidden');
       return models.Organisation.findByIdAndRemove(id)
     },
-    joinOrganisation(parent, { id }, { currentUser }) {
-      return models.Organisation.findById(id)
-        .then((organisation) => {
-          return Promise.all([
-            organisation.users.push({
-              fn: currentUser.fullname,
-              em: currentUser.email,
-              av: currentUser.avatarUrl,
-              st: orgStatus.WAITING_CONFIRM,
-              _id: currentUser._id,
-              t: Date.now(),
-            }) && organisation.save(),
-            currentUser.organisations.push({
-              title: organisation.title,
-              logoUrl: organisation.logoUrl,
-              status: orgStatus.WAITING_CONFIRM,
-              _id: organisation._id,
-              t: Date.now(),
-            }) &&  currentUser.save()
-          ])
-        })
-        .then(([ organisation ]) => organisation )
+
+    addUserToOrganisation(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${id}:addUser`)) return new Error('Forbidden');
+      if (!input.userId && !input.email) return new Error('Bad Request');
+
+      return (input.userId ?
+        models.User.findById(userId) : models.User.findOneAndCreate({ email: input.email }, { email: input.email }, { new: true, upsert: true })
+      ).then(user => {
+        return registerToOrganisation(user, id);
+      }).then(() => models.Organisation.findById(id));
     },
-    addUserToOrganisation(_, { id, input }) {
-      return Promise.all([
-        models.Organisation.findById(id),
-        models.User.findOneAndUpdate({ email: input.email }, {}, { new: true, upsert: true })
-      ]).then(([ organisation, user ]) => {
-        return Promise.all([
-          organisation.users.push({
-            fn: user.fullname,
-            em: user.email,
-            av: user.avatarUrl,
-            st: input.status,
-            _id: user._id,
-            t: Date.now(),
-          }) && organisation.save(),
-          user.organisations.push({
-            title: organisation.title,
-            logoUrl: organisation.logoUrl,
-            status: input.status,
-            _id: organisation._id,
-            t: Date.now(),
-          }) &&  user.save()
-        ])
-      }).then(([ organisation ]) => organisation )
+
+    setRoleInOrganisation(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${id}:setRole`)) return new Error('Forbidden');
+
+      return setRoleInOrganisation(input.userId, id, input.role).then(() => models.Organisation.findById(id));
     }
   },
 }

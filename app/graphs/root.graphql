@@ -1,3 +1,9 @@
+scalar Date
+scalar DateTime
+scalar Time
+scalar EventAnswer
+scalar OrganisationRole
+
 type Query {
   isAuthenticated: Boolean!
   version: String
@@ -6,7 +12,3 @@ type Query {
 type Mutation {
   version: String
 }
-
-scalar Date
-scalar DateTime
-scalar Time

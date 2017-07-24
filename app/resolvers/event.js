@@ -1,124 +1,178 @@
 const { omit, difference } = require('lodash');
 const { mongoose, models } = require('../db');
-const getFieldNames = require('./utils/getFields');
+
+const { answerYesToEvent, answerMaybeToEvent, answerNoToEvent } = require ('../tasks/answerToEvent');
+const getFieldNames = require('../utils/getFields');
 
 module.exports = {
+
   Event: {
     id(event) {
       return event._id || event.id;
     },
     nusers(event) {
-      return event.users.length;
+      return event.nusers || 0;
     },
-    status(event, { userId }) {
-      if(event.status) return event.status;
-      if(!userId) return null;
-      const user = event.users.find(u => u._id === userId);
-      return user ? user.status : null;
+    answer(event, { userId }, { currentUser }) {
+      if(event.answer) return event.answer;
+      if(!currentUser) return null;
+      if (event.yes && event.yes.find(u => String(u.ref) == (userId || currentUser.id))) return 'YES';
+      if (event.maybe && event.maybe.find(u => String(u.ref) == (userId || currentUser.id))) return 'MAYBE';
+      if (event.no && event.no.find(u => String(u.ref) == (userId || currentUser.id))) return 'NO';
+      return null;
     },
     users(event, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
-        'id', 'fullname', 'avatarUrl', 'status', '__typename'
+        'id', 'fullname', 'avatarUrl', 'answer', '__typename'
       ])
       if (fields.length === 0) {
-        return event.users.map(u => ({
-          id: u._id,
+        return event.yes.map(u => ({
+          id: u.ref,
           fullname: u.fn,
           avatarUrl: u.av,
-          status: u.st,
+          answer: 'yes',
         }))
       } else {
         return models.User.find({
-          _id: { $in: event.users.map(u => u._id ) }
+          _id: { $in: event.yes.map(u => u.ref ) }
         })
       }
     },
     organisation(event, args, ctx, info) {
+      console.log(event)
       const fields = difference(getFieldNames(info), [
         'id', 'title', 'logoUrl', '__typename'
       ]);
       if (fields.length === 0) {
         return {
-          id: event.organisation._id,
+          id: event.organisation.ref,
           title: event.organisation.title,
           logoUrl: event.organisation.logoUrl,
         }
       } else {
-        return models.Organisation.findById(event.organisation._id)
+        return models.Organisation.findById(event.organisation.ref)
       }
     },
   },
+
   Query: {
-    events(parent, { before, after, limit, offset }, { currentUser, checkOrgPermission }) {
-      if (!currentUser) return [];
+
+    events(parent, { before, after, limit, offset, organisationId }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (organisationId && !currentUser.permissions.check(`organisation:${organisationId}:events`)) return new Error('Forbidden');
+
       const query = models.Event.find();
       if (after) query.gte('endTime', after)
       if (before) query.lte('startTime', before)
-      query.in('organisation._id',
-        currentUser.organisations
-        .filter(o => checkOrgPermission(o.status, 'events:list'))
-        .map(o => o._id))
+
+      if (organisationId) {
+        query.where('organisation.ref').equals(organisationId)
+      } else {
+        query.in('organisation.ref', currentUser.permissions.permissions('organisation:?:events'))
+      }
+
       return query.sort('endTime').limit(limit).skip(offset).lean().exec()
     },
-    event(parent, { id }) {
-      return models.Event.findById(id);
-    }
+
+    event(parent, { id }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      return models.Event.findById(id).then(event => {
+        if (!event) return new Error('Not found');
+        if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
+        if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event`))return new Error('Forbidden');
+
+        return event;
+      });
+    },
+
   },
   Mutation: {
-    createEvent(parent, { input }) {
-      return Promise.all([
-        Promise.resolve(new models.Event({
-          _id: mongoose.Types.ObjectId(),
-          title: input.title,
-          description: input.description,
-          startTime: input.startTime,
-          endTime: input.endTime,
-        })),
-        models.Organisation.findById(input.organisationId, 'title logoUrl events')
-      ]).then(([ event, organisation ]) => {
-        return Promise.all([
-          event.organisation.set({
-            title: organisation.title,
-            logoUrl: organisation.logoUrl,
-            _id: organisation._id,
-          }) && event.save(),
-          organisation.events.push({
-            title: event.title,
-            startTime: event.startTime,
-            endTime: event.endTime,
-            _id: event._id,
-          }) && organisation.save()
 
-        ])
-      }).then(([ event ]) => event )
-    },
-    updateEvent(parent, { id, input }) {
-      return models.Event.findByIdAndUpdate(id, input, { new: true });
-    },
-    deleteEvent(parent, { id }) {
-      return models.Event.findByIdAndRemove(id);
-    },
-    participateToEvent(parent, { id, input }) {
+    createEvent(parent, { input, organisationId }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${organisationId}:createEvent`)) return new Error('Forbidden');
+
       return Promise.all([
-        models.Event.findById(id, 'title startTime endTime users'),
-        models.User.findById(input.userId, 'fullname avatarUrl events')
-      ]).then(([ event, user ]) => {
-        return Promise.all([
-          organisation.users.push({
-            fn: user.fullname,
-            em: user.email,
-            av: user.avatarUrl,
-            st: input.status,
-            _id: user._id
-          }) && organisation.save(),
-          user.organisations.push({
-            title: organisation.title,
-            logoUrl: organisation.logoUrl,
-            status: input.status,
-            _id: organisation._id
-          }) &&  user.save()
-        ])
-      }).then(([ organisation ]) => organisation )
-    }
+        Promise.resolve(new models.Event(Object.assign({ _id: mongoose.Types.ObjectId() }, input))),
+        models.Organisation.findById(organisationId, 'title logoUrl events')
+      ]).then(([ event, organisation ]) => {
+        event.organisation = {
+          title: organisation.title,
+          logo: organisation.logo,
+          ref: organisation._id,
+        };
+        organisation.events.push({
+          title: event.title,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          ref: event._id,
+        });
+        return Promise.all([event.save(), organisation.save()])
+      }).then(([ event ]) => {
+        return event;
+      })
+    },
+
+    editEvent(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      return models.Event.findById(id)
+        .then(event => {
+          if (!event) return new Error('Not found');
+          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
+          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:editEvent`))return new Error('Forbidden');
+
+          return Object.assign(event, input).save();
+        })
+    },
+
+    deleteEvent(parent, { id }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      return models.Event.findById(id)
+        .then(event => {
+          if (!event) return new Error('Not found');
+          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
+          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:deleteEvent`))return new Error('Forbidden');
+
+          return event.remove();
+        });
+    },
+
+    addUserToEvent(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      return models.Event.findById(id)
+        .then(event => {
+          if (!event) return new Error('Not found');
+          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
+
+          if (input.userId && input.userId !== String(currentUser.id)) {
+            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:addUserToEvent`))return new Error('Forbidden');
+          }
+
+
+          if (input.answer === 'YES') {
+            return answerYesToEvent(
+              input.userId || currentUser,
+              event
+            ).then(() => models.Event.findById(id))
+          } else if (input.answer === 'NO') {
+            return answerNoToEvent(
+              input.userId || currentUser,
+              event
+            ).then(() => models.Event.findById(id))
+          } else if (input.answer === 'MAYBE') {
+            return answerMaybeToEvent(
+              input.userId || currentUser,
+              event
+            ).then(() => models.Event.findById(id))
+          }
+
+          return event;
+        });
+    },
+
   }
 }

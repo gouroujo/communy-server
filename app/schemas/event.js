@@ -4,8 +4,7 @@ const AddressSchema = require('./address');
 const SubUserSchema = new Schema({
   fn: String, // user Fullname
   av: String, // user avatarUrl
-  st: { type: String }, // status
-  _id: { type: Schema.Types.ObjectId, unique: true} // user id
+  ref: { type: Schema.Types.ObjectId, unique: true} // user id
 });
 
 const EventSchema = new Schema({
@@ -13,12 +12,16 @@ const EventSchema = new Schema({
   description: String,
   startTime: { type: Date, index: true },
   endTime: { type: Date, index: true },
+  allDay: Boolean,
   organisation: {
-    _id: Schema.Types.ObjectId,
+    ref: Schema.Types.ObjectId,
     title: String,
-    logoUrl: String,
+    logo: String,
   },
-  users: [SubUserSchema],
+  nusers: Number,
+  yes: [SubUserSchema],
+  maybe: [SubUserSchema],
+  no: [SubUserSchema],
   address: AddressSchema,
 });
 

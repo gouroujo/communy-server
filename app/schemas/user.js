@@ -1,19 +1,24 @@
+const { promisify } = require('util');
+const shiroTrie = require('shiro-trie');
 const { Schema } = require('mongoose');
 const { pbkdf2, randomBytes, timingSafeEqual } = require('crypto');
-var { sign, verify } = require('jsonwebtoken');
+const { sign, verify } = require('jsonwebtoken');
+
+const signAsync = promisify(sign);
 
 const { values } = require('lodash')
-const { orgStatus, SECRET, SECRET_PUBLIC } = require('../config');
+const { orgPermissions, orgStatus, SECRET, SECRET_PUBLIC } = require('../config');
 
 const SubOrganisationSchema = new Schema({
   title: String, // org title
-  logoUrl: String, // org logoUrl
-  status: {
+  logo: String, // org logoUrl
+  role: {
     type: String,
     enum: values(orgStatus),
     index: true
   }, // status
-  _id: { type: Schema.Types.ObjectId, unique: true}, // organisation id
+  ack: Boolean,
+  ref: { type: Schema.Types.ObjectId, unique: true}, // organisation id
   t: Date,
 });
 
@@ -22,17 +27,17 @@ SubOrganisationSchema.pre('save', function(next) {
     return next();
 });
 
-const SubEventSchema = new Schema({
-  title: String,
-  startTime: Date,
-  endTime: {
-    type: Date,
-    expires: 0
-  },
-  status: { type: String, index: true }, // status
-  org: Schema.Types.ObjectId,
-  _id: { type: Schema.Types.ObjectId, unique: true} // event id
-});
+// const SubEventSchema = new Schema({
+//   title: String,
+//   startTime: Date,
+//   endTime: {
+//     type: Date,
+//     expires: 0
+//   },
+//   status: { type: String, index: true }, // status
+//   org: Schema.Types.ObjectId,
+//   _id: { type: Schema.Types.ObjectId, unique: true} // event id
+// });
 // SubEventSchema.index({ endTime: 1}, { expireAfterSeconds: 0 }) // Expire after 12h
 
 const UserSchema = new Schema({
@@ -45,7 +50,7 @@ const UserSchema = new Schema({
     index: true,
   },
   confirmed: Boolean,
-  avatarUrl:   String,
+  avatar:   String,
   birthday: Date,
   birthplace: String,
   phone1: String,
@@ -56,16 +61,29 @@ const UserSchema = new Schema({
     sparse: true,
   },
   organisations: [SubOrganisationSchema],
-  events: [SubEventSchema],
 }, {
   timestamps: true
 });
 
-UserSchema.virtual('fullname').
-  get(function() { return this.firstname + ' ' + this.lastname; }).
-  set(function(v) {
+UserSchema.virtual('fullname')
+  .get(function() { return this.firstname + ' ' + this.lastname; })
+  .set(function(v) {
     this.firstname = v.substr(0, v.indexOf(' '));
     this.lastname = v.substr(v.indexOf(' ') + 1);
+  });
+
+UserSchema.virtual('permissions')
+  .get(function() {
+    const permissions = shiroTrie.new();
+
+    if (this.organisations) {
+      permissions.add(this.organisations.reduce((p, o) => {
+        if (!o.role || !o.ref) return p;
+        return p.concat(orgPermissions[o.role].map(a => `organisation:${o.ref}:${a}`));
+      }, []));
+    }
+
+    return permissions;
   });
 
 const hashPassword = (password, salt) => new Promise((resolve, reject) => {
@@ -109,21 +127,15 @@ UserSchema.methods.comparePassword = function(candidatePassword) {
   });
 };
 
-UserSchema.methods.getStatusInOrganisation = function(organisationId) {
-  const o = this.organisations.find(org => org.id === organisationId);
-  return o ? o.status : false;
-};
-
 UserSchema.methods.getToken = function() {
-  return sign({
+  return signAsync({
     email: this.email,
     id: this._id,
   }, SECRET, { algorithm: 'HS512'})
 };
 
-UserSchema.methods.getPublicToken = function(expiration) {
-  if (expiration) return sign(this._id, SECRET_PUBLIC, { expiresIn: expiration })
-  return sign(this._id, SECRET_PUBLIC)
+UserSchema.methods.getPublicToken = function(options) {
+  return signAsync(this._id, SECRET_PUBLIC, options)
 };
 
 UserSchema.statics.findByToken = function(token) {

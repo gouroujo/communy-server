@@ -7,7 +7,7 @@ const { eventStatus, orgStatus } = require('./config');
 
 faker.locale = "fr";
 
-var nOrgs = 10;
+var nOrgs = 30;
 
 var users = lodash.times(nOrgs * 10, function(i) {
   return {

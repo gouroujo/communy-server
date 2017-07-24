@@ -1,10 +1,10 @@
 const bodyParser = require('body-parser');
 const { get } = require('https');
 
-const { REDIS_URI, jobs } = require('./config');
+const { jobs } = require('./config');
 const { models } = require('./db');
 
-const queue = require('kue').createQueue({ redis: REDIS_URI });
+const queue = require('./queue');
 
 module.exports = (app) => {
   app.use('/auth', bodyParser.json());
@@ -32,31 +32,33 @@ module.exports = (app) => {
                   lastname: fbuser.last_name,
                   email: fbuser.email,
                   facebookId: fbuser.id,
-                  avatarUrl: fbuser.picture ? fbuser.picture.data.url : null,
+                  avatar: fbuser.picture ? fbuser.picture.data.url : null,
                   confirmed: true,
                 }).then((user, err) => {
-                  if(!err) {
-                    res.append('Authorization', user.getToken()).sendStatus(201);
-                  }
-                  res.sendStatus(500);
+                  if(err) return res.sendStatus(500);
+                  return user.getToken()
+                    .then(token => {
+                      return res.append('Authorization', token).sendStatus(201);
+                    });
                 })
               } else if (users.length === 1) {
                 const [ user ] = users;
 
                 if (user.facebookId === fbuser.id) {
-                  res.append('Authorization', user.getToken()).sendStatus(200);
-                } else if(user.email === fbuser.email) {
-                  res.status(409).json({ error: 'DUPLICATE_ACCOUNT' })
-                } else {
-                  res.sendStatus(500);
+                  return user.getToken()
+                    .then(token => {
+                      return res.append('Authorization', token).sendStatus(200);
+                    });
                 }
-              } else {
-                res.sendStatus(500);
+                if(user.email === fbuser.email) {
+                  return res.status(409).json({ error: 'DUPLICATE_ACCOUNT' })
+                }
               }
+              return res.sendStatus(500);
             })
           });
       } else {
-        res.sendStatus(503)
+        return res.sendStatus(503)
       }
     });
   });
@@ -66,10 +68,13 @@ module.exports = (app) => {
     models.User.findOne({ email }).then(user => {
       if(user) {
         return user.comparePassword(password).then(auth => {
-          if (auth) res.append('Authorization', user.getToken()).sendStatus(200);
-          else res.sendStatus(401);
+          if(!auth) return res.sendStatus(401);
+          return user.getToken()
+          .then(token => {
+            return res.append('Authorization', token).sendStatus(200);
+          })
         }).catch(() => {
-          res.sendStatus(401);
+          return res.sendStatus(401);
         })
       } else {
         const name = email.substr(0, email.indexOf('@'));
@@ -81,15 +86,18 @@ module.exports = (app) => {
           confirmed: false,
         }).then(user => {
           queue.create(jobs.SEND_CONFIRM_EMAIL, { userId: user._id }).priority('high').save();
-          res.append('Authorization', user.getToken()).sendStatus(201);
+          return user.getToken()
+          .then(token => {
+            return res.append('Authorization', token).sendStatus(201);
+          })
         })
       }
     }).catch(e => {
-      res.sendStatus(500);
+      return res.sendStatus(500);
     })
   });
 
-  app.post('/auth/sigin', (req, res) => {
+  app.post('/auth/signin', (req, res) => {
     const {
       email,
       password,
@@ -102,10 +110,13 @@ module.exports = (app) => {
       if(user) {
         if (!user.password) return res.status(409).json({ error: 'DUPLICATE_ACCOUNT' });
         return user.comparePassword(password).then(auth => {
-          if (auth) res.append('Authorization', user.getToken()).sendStatus(200);
-          else res.sendStatus(401);
+          if(!auth) return res.sendStatus(401);
+          return user.getToken()
+          .then(token => {
+            return res.append('Authorization', token).sendStatus(200);
+          })
         }).catch(() => {
-          res.sendStatus(401);
+          return res.sendStatus(401);
         })
       } else {
         return models.User.create({
@@ -115,12 +126,14 @@ module.exports = (app) => {
           lastname: lastname,
           birthday: birthday,
           confirmed: false,
-        }).then(user => {
-          res.append('Authorization', user.getToken()).sendStatus(201);
+        })
+        .then(user => user.getToken())
+        .then(token => {
+          return res.append('Authorization', token).sendStatus(201);
         });
       }
     }).catch(e => {
-      res.sendStatus(500);
+      return res.sendStatus(500);
     })
   });
 
@@ -130,12 +143,7 @@ module.exports = (app) => {
     } = req.body;
     models.User.findOne({ email }).then(user => {
       if (!user) return res.sendStatus(404);
-      // TODO: send email with reset link
-      const token = user.getPublicToken({
-        expiresIn: '24h',
-        subject: 'rst_psw',
-      });
-
+      queue.create(jobs.SEND_RESET_PASSWORD, { userId: user._id }).priority('high').save();
       return res.sendStatus(200);
     })
   });
@@ -147,11 +155,7 @@ module.exports = (app) => {
     models.User.findOne({ email }).then(user => {
       if (!user) return res.sendStatus(404);
       if (user.confirmed) return res.sendStatus(204);
-      // TODO: send email with confirm link
-      const token = user.getPublicToken({
-        subject: 'cfm_email',
-      });
-
+      queue.create(jobs.SEND_CONFIRM_EMAIL, { userId: user._id }).priority('high').save();
       return res.sendStatus(200);
     })
   });
@@ -163,12 +167,14 @@ module.exports = (app) => {
     } = req.body;
     models.User.findByPublicToken(token, { subject: 'rst_psw',}).then(user => {
       if(!user) return res.sendStatus(404);
-      return user.setPassword(password).then(() => {
-        res.append('Authorization', user.getToken()).sendStatus(200);
+      return user.setPassword(password)
+      .then(() => user.getToken())
+      .then(token => {
+        return res.append('Authorization', token).sendStatus(200);
       });
     }).catch(e => {
       console.log(e);
-      res.sendStatus(400);
+      return res.sendStatus(400);
     })
   });
 
@@ -176,10 +182,10 @@ module.exports = (app) => {
     const { token } = req.body;
     models.User.confirmByPublicToken(token).then(user => {
       if (!user) return res.sendStatus(400);
-      res.append('Authorization', user.getToken()).sendStatus(200);
+      return res.sendStatus(200);
     }).catch(e => {
       console.log(e);
-      res.sendStatus(400);
+      return res.sendStatus(400);
     });
   })
 }

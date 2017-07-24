@@ -1,6 +1,6 @@
 const { omit } = require('lodash');
 const crypto = require('crypto');
-const { CLOUDINARY_SECRET } = require('../../config');
+const { CLOUDINARY_SECRET } = require('../config');
 
 module.exports = (data) => {
   const hash = crypto.createHash('sha1');

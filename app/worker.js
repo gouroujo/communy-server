@@ -1,6 +1,5 @@
-const { REDIS_URI, jobs } = require('./config');
-
-const queue = require('kue').createQueue({ redis: REDIS_URI });
+const { jobs } = require('./config');
+const queue = require('./queue');
 
 process.once('SIGTERM', function ( sig ) {
   queue.shutdown(5000, function(err) {
@@ -17,7 +16,13 @@ process.once('SIGUSR2', function () {
 });
 
 queue.process(jobs.SEND_CONFIRM_EMAIL, function(job, done) {
-  return require('./tasks/sendEmailConfirmation')(job.data.userId)
+  return require('./tasks/sendEmailConfirmation')(job.data)
+    .then((res) => done(null, res))
+    .catch((err) => done(new Error(err)))
+});
+
+queue.process(jobs.SEND_RESET_PASSWORD, function(job, done) {
+  return require('./tasks/sendResetPassword')(job.data)
     .then((res) => done(null, res))
     .catch((err) => done(new Error(err)))
 });

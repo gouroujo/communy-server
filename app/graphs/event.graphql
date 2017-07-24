@@ -1,8 +1,13 @@
 extend type Query {
+
+  # get a list of all events you have access to
   events (
+    # filter to a specific organisation
     organisationId: ID
+    # limit the number of events
     limit: Int
-    status: String
+    # filter events by your answer
+    answer: String
     offset: Int
     after: DateTime
     before: DateTime
@@ -15,30 +20,30 @@ extend type Query {
 
 extend type Mutation {
   createEvent (
-    input: CreateEventInput!
+    input: EventInput!
+    organisationId: ID!
   ): Event!
 
   deleteEvent (
     id: ID!
   ): Event
 
-  updateEvent (
+  editEvent (
     id: ID!
-    input: UpdateEventInput!
+    input: EventInput!
   ): Event!
 
-  participateToEvent (
+  addUserToEvent (
     id: ID!
-    input: ParticipateToEventInput!
+    input: addUserToEventInput!
   ): Event
 
 }
 
 type EventUser {
-  id: ID!
   fullname: String
-  avatarUrl: String
-  status: String
+  avatar: String
+  answer: EventAnswer
 }
 
 type Event {
@@ -47,29 +52,23 @@ type Event {
   description: String
   startTime: DateTime!
   endTime: DateTime!
+  allDay: Boolean
   organisation: Organisation!
   nusers: Int!
   users: [EventUser!]
   address: Address
-  status(userId: ID): String
+  answer: EventAnswer
 }
 
-input CreateEventInput {
+input EventInput {
   title: String!
   description: String
   startTime: DateTime!
   endTime: DateTime!
-  organisationId: ID!
+  allDay: Boolean
 }
 
-input UpdateEventInput {
-  title: String!
-  description: String
-  startTime: DateTime!
-  endTime: DateTime!
-}
-
-input ParticipateToEventInput {
+input addUserToEventInput {
   userId: ID!
-  status: String
+  answer: EventAnswer!
 }

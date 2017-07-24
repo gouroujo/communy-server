@@ -1,23 +1,24 @@
 extend type Query {
   user (
     id: ID!
-  ): User!
+  ): User
 
   me: User
 }
 
 extend type Mutation {
-  login (
-    input: UserLoginInput!
-  ): String!
-
-  updateUser (
+  updateProfile (
     input: UserUpdateInput!
   ): User!
 
-  createUser (
-    input: UserCreateInput!
-  ): User!
+  joinOrganisation (
+    organisationId: ID!
+  ) : User!
+
+  answerToEvent (
+    eventId: ID!
+    answer: EventAnswer!
+  ) : User!
 }
 
 type User {
@@ -26,55 +27,43 @@ type User {
   lastname: String
   fullname: String
   email: String
-  avatarUrl: String
+  avatar: String
   birthday: Date
   birthplace: String
   phone1: String
   phone2: String
 
   organisations (
-    status: String
+    role: OrganisationRole
     limit: Int
     offset: Int
   ): [Organisation!]
+
   norganisations (
-    status: String
+    role: OrganisationRole
   ): Int!
 
   events (
     organisationId: ID
     after: Date
     before: Date
-    status: String
+    answer: EventAnswer
     limit: Int
     offset: Int
   ): [Event!]
+
   nevents (
     organisationId: ID
     after: Date
     before: Date
-    status: String
+    answer: EventAnswer
   ): Int!
+
 }
 
 input UserUpdateInput {
-  id: ID!
   firstname: String
   lastname: String
-  email: String
-  password: String
-  password_confirm: String
-}
-
-input UserCreateInput {
-  firstname: String
-  lastname: String
-  email: String
-  password: String
-  password_confirm: String
-}
-
-input UserLoginInput {
   email: String
   password: String
 }
