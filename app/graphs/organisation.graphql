@@ -49,8 +49,8 @@ type Organisation {
   coverUploadOpts: String
 
   role: OrganisationRole
-  waiting_ack: Boolean!
-  waiting_confirm: Boolean!
+  isWaitingAck: Boolean!
+  isWaitingConfirm: Boolean!
   joined: Boolean!
   joinedAt: DateTime
 
@@ -69,18 +69,21 @@ type Organisation {
   users (
     limit: Int
     role: OrganisationRole
+    waiting_ack: Boolean
+    waiting_confirm: Boolean
   ): [OrganisationUser!]
+
 
   nusers(
     role: OrganisationRole
   ): Int!
-}
-type OrganisationUser {
-  id: ID!
-  fullname: String
-  avatarUrl: String
-  email: String
-  role: OrganisationRole
+
+  nwaitingAck: Int
+  nwaitingConfirm: Int
+
+  user(
+    id: ID!
+  ): OrganisationUser!
 }
 
 input OrganisationInput {

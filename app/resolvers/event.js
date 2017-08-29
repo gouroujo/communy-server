@@ -16,9 +16,9 @@ module.exports = {
     answer(event, { userId }, { currentUser }) {
       if(event.answer) return event.answer;
       if(!currentUser) return null;
-      if (event.yes && event.yes.find(u => String(u.ref) == (userId || currentUser.id))) return 'YES';
-      if (event.maybe && event.maybe.find(u => String(u.ref) == (userId || currentUser.id))) return 'MAYBE';
-      if (event.no && event.no.find(u => String(u.ref) == (userId || currentUser.id))) return 'NO';
+      if (event.yes && event.yes.find(u => String(u.ref) == (userId || currentUser.id))) return 'yes';
+      if (event.maybe && event.maybe.find(u => String(u.ref) == (userId || currentUser.id))) return 'mb';
+      if (event.no && event.no.find(u => String(u.ref) == (userId || currentUser.id))) return 'no';
       return null;
     },
     users(event, args, ctx, info) {
@@ -39,7 +39,6 @@ module.exports = {
       }
     },
     organisation(event, args, ctx, info) {
-      console.log(event)
       const fields = difference(getFieldNames(info), [
         'id', 'title', 'logoUrl', '__typename'
       ]);
@@ -91,27 +90,18 @@ module.exports = {
 
     createEvent(parent, { input, organisationId }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
-      if (!currentUser.permissions.check(`organisation:${organisationId}:createEvent`)) return new Error('Forbidden');
+      if (!currentUser.permissions.check(`organisation:${organisationId}:event_create`)) return new Error('Forbidden');
 
-      return Promise.all([
-        Promise.resolve(new models.Event(Object.assign({ _id: mongoose.Types.ObjectId() }, input))),
-        models.Organisation.findById(organisationId, 'title logoUrl events')
-      ]).then(([ event, organisation ]) => {
-        event.organisation = {
-          title: organisation.title,
-          logo: organisation.logo,
-          ref: organisation._id,
-        };
-        organisation.events.push({
-          title: event.title,
-          startTime: event.startTime,
-          endTime: event.endTime,
-          ref: event._id,
-        });
-        return Promise.all([event.save(), organisation.save()])
-      }).then(([ event ]) => {
-        return event;
-      })
+      return models.Organisation.findById(organisationId, 'title logo').then(organisation => {
+        if (!organisation) return new Error('organisation not found');
+        return models.Event.create(Object.assign(input, {
+          organisation: {
+            title: organisation.title,
+            logo: organisation.logo,
+            ref: organisation._id,
+          }
+        }))
+      });
     },
 
     editEvent(parent, { id, input }, { currentUser }) {
@@ -121,7 +111,7 @@ module.exports = {
         .then(event => {
           if (!event) return new Error('Not found');
           if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:editEvent`))return new Error('Forbidden');
+          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_edit`))return new Error('Forbidden');
 
           return Object.assign(event, input).save();
         })
@@ -134,7 +124,7 @@ module.exports = {
         .then(event => {
           if (!event) return new Error('Not found');
           if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:deleteEvent`))return new Error('Forbidden');
+          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_delete`))return new Error('Forbidden');
 
           return event.remove();
         });
@@ -147,11 +137,11 @@ module.exports = {
         .then(event => {
           if (!event) return new Error('Not found');
           if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-
           if (input.userId && input.userId !== String(currentUser.id)) {
-            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:addUserToEvent`))return new Error('Forbidden');
+            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_add_user`))return new Error('Forbidden');
+          } else {
+            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_answer`))return new Error('Forbidden');
           }
-
 
           if (input.answer === 'YES') {
             return answerYesToEvent(

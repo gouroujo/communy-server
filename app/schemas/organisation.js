@@ -2,18 +2,37 @@ const { Schema } = require('mongoose');
 const { values } = require('lodash')
 const { orgStatus } = require('../config');
 
-const OrganisationEventSchema = new Schema({
-  title: String,
-  startTime: Date,
-  endTime: Date,
-  ref: { type: Schema.Types.ObjectId, ref: 'Event' }
-});
+// const OrganisationEventSchema = new Schema({
+//   title: String,
+//   startTime: Date,
+//   endTime: Date,
+//   ref: { type: Schema.Types.ObjectId, ref: 'Event' }
+// });
 
 const OrganisationUserSchema = new Schema({
-  fullname: String,
-  name: String,
+  firstname: String,
+  lastname: String,
   avatar: String,
-  role: String,
+  role: {
+    type: String,
+    enum: values(orgStatus),
+    index: true
+  }, // status
+  t: Date,
+  ref: { type: Schema.Types.ObjectId, ref: 'User'}
+});
+
+const OrganisationWtAckUserSchema = new Schema({
+  firstname: String,
+  lastname: String,
+  avatar: String,
+  ref: { type: Schema.Types.ObjectId, ref: 'User'}
+});
+
+const OrganisationWtConfirmUserSchema = new Schema({
+  firstname: String,
+  lastname: String,
+  avatar: String,
   ref: { type: Schema.Types.ObjectId, ref: 'User'}
 });
 
@@ -24,10 +43,10 @@ const OrganisationSchema = new Schema({
   cover: String,
   nusers: Number,
   nevents: Number,
-  events: [OrganisationEventSchema],
+  // events: [OrganisationEventSchema],
   users: [OrganisationUserSchema],
-  wt_confirm: [OrganisationUserSchema],
-  wt_ack: [OrganisationUserSchema],
+  wt_confirm: [OrganisationWtConfirmUserSchema],
+  wt_ack: [OrganisationWtAckUserSchema],
 });
 
 module.exports = OrganisationSchema;

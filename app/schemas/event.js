@@ -4,7 +4,7 @@ const AddressSchema = require('./address');
 const SubUserSchema = new Schema({
   fn: String, // user Fullname
   av: String, // user avatarUrl
-  ref: { type: Schema.Types.ObjectId, unique: true} // user id
+  ref: { type: Schema.Types.ObjectId, unique: true, sparse: true} // user id
 });
 
 const EventSchema = new Schema({
@@ -20,7 +20,7 @@ const EventSchema = new Schema({
   },
   nusers: Number,
   yes: [SubUserSchema],
-  maybe: [SubUserSchema],
+  mb: [SubUserSchema],
   no: [SubUserSchema],
   address: AddressSchema,
 });

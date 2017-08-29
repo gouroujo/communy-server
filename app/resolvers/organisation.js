@@ -16,54 +16,100 @@ module.exports = {
     logo(organisation) {
       return organisation.logo || organisation.logoUrl;
     },
+
     cover(organisation) {
       return organisation.cover || organisation.coverUrl;
     },
+
     id(organisation) {
       return organisation._id || organisation.id;
     },
+
     nusers(organisation) {
       if (!organisation.users) return 0;
       return organisation.users.length;
     },
+
+    nwaitingAck(organisation) {
+      if (!organisation.wt_ack) return 0;
+      return organisation.wt_ack.length;
+    },
+
+    nwaitingConfirm(organisation) {
+      if (!organisation.wt_confirm) return 0;
+      return organisation.wt_confirm.length;
+    },
+
     role(organisation, args, { currentUser }) {
       if (!currentUser) return null;
       if (organisation.role) return organisation.role;
-
       const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
       return org ? org.role : null;
     },
-    waiting_ack(organisation, args, { currentUser }) {
+
+    isWaitingAck(organisation, args, { currentUser }) {
       if (!currentUser) return false;
       if (organisation.ack === false) return true;
 
       const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
       return org ? !org.ack : false
     },
-    waiting_confirm(organisation, args, { currentUser }) {
+
+    isWaitingConfirm(organisation, args, { currentUser }) {
       if (!currentUser) return false;
       if (organisation.ack && !organisation.role) return true;
-
       const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
       return org ? (org.ack && !org.role) : false
     },
+
     joined(organisation, args, { currentUser }) {
       if (!currentUser) return false;
       if (organisation.ack && organisation.role) return true;
-
       const org = currentUser.organisations.find(o => (String(o.ref) === String(organisation._id)));
       return org ? !!(org.ack && org.role) : false
     },
+
     joinedAt(organisation) {
       return organisation.t || null;
     },
-    users(organisation, args, ctx, info) {
-      return organisation.users;
+
+    users(organisation, { role, limit, waiting_ack, waiting_confirm }, { currentUser }, info) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      let users;
+      if (waiting_ack) {
+        if (!currentUser.permissions.check(`organisation:${organisation._id}:addUser`)) return new Error('Forbidden');
+        users = organisation.wt_ack;
+      } else if (waiting_confirm) {
+        if (!currentUser.permissions.check(`organisation:${organisation._id}:addUser`)) return new Error('Forbidden');
+        users = organisation.wt_confirm;
+      } else {
+        users = organisation.users
+      }
+      // return users.map(user => ({
+      //   id: user.ref,
+      //   fullname: user.fullname,
+      //   avatar: user.avatar,
+      //   role: user.role,
+      // }));
+      return users;
     },
+
+    user(organisation, { id }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      let user = organisation.users.find(u => (String(u.ref) === id));
+      if (!user) user = organisation.wt_ack.find(u => (String(u.ref) === id));
+      if (!user) user = organisation.wt_confirm.find(u => (String(u.ref) === id));
+      if (!user) return new Error('User Not Found');
+
+      return user;
+    },
+
     nevents(organisation) {
       if (!organisation.events) return 0;
       return organisation.events.length;
     },
+
     events(organisation, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
         'id', 'title', 'startTime', 'endTime'
@@ -84,6 +130,7 @@ module.exports = {
         return query.limit(args.limit).skip(args.offset).lean().exec()
       }
     },
+
     coverUploadOpts(organisation) {
       if(!organisation || !organisation._id) return null;
 
@@ -127,16 +174,14 @@ module.exports = {
 
   Mutation: {
     createOrganisation(_, { input }, { currentUser }) {
-      const organisation = new models.Organisation(input);
-
-      return minifyUser(currentUser, {
-        role: orgStatus.ADMIN,
-        ack: false,
-      }).then(u => {
-        organisation.nusers = 1;
-        organisation.users = [u];
-        return organisation.save();
-      });
+      return models.Organisation.create(input)
+        .then(organisation => {
+          return setRoleInOrganisation(currentUser, organisation, orgStatus.ADMIN)
+          .then(() => models.Organisation.findById(organisation.id));
+        })
+        .catch(e => {
+          return new Error(e);
+        })
     },
 
     editOrganisation(parent, { id, input }, { currentUser }) {

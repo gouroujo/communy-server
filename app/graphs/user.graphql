@@ -1,8 +1,14 @@
 extend type Query {
   user (
     id: ID!
+    organisationId: ID!
   ): User
-
+  users (
+    organisationId: ID
+    search: String
+    limit: Int
+    offset: Int
+  ): [User!]
   me: User
 }
 
@@ -58,7 +64,29 @@ type User {
     before: Date
     answer: EventAnswer
   ): Int!
+}
 
+type OrganisationUser {
+  ref: ID!
+  firstname: String
+  lastname: String
+  fullname: String
+  email: String
+  avatar: String
+  birthday: Date
+  birthplace: String
+  phone1: String
+  phone2: String
+
+  events (
+    after: Date
+    before: Date
+    answer: EventAnswer
+    limit: Int
+    offset: Int
+  ): [Event!]
+
+  role: OrganisationRole
 }
 
 input UserUpdateInput {

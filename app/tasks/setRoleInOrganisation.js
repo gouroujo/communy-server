@@ -6,7 +6,7 @@ const minifyOrganisation = require('../utils/minifyOrganisation');
 
 module.exports = function(u, o, role) {
   return Promise.all([
-    minifyUser(u),
+    minifyUser(u, { role }),
     minifyOrganisation(o, { role , ack: true })
   ])
   .then(([ user, organisation ]) => {

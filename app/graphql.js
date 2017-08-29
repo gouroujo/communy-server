@@ -1,5 +1,7 @@
 const bodyParser = require('body-parser');
+const compression = require('compression');
 const fs = require('fs');
+
 const { graphqlExpress, graphiqlExpress } = require('graphql-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
 const OpticsAgent = require('optics-agent');
@@ -16,7 +18,6 @@ const User = fs.readFileSync(__dirname + '/graphs/user.graphql', { encoding: 'ut
 
 const resolvers = require('./resolvers');
 
-const { checkOrgPermission } = require('./permissions');
 
 module.exports = (app) => {
 
@@ -52,6 +53,7 @@ module.exports = (app) => {
   }
 
   app.use(config.ENDPOINT_URL,
+    compression(),
     bodyParser.json(),
     userAuth,
     graphqlExpress((req, res) => {
@@ -60,7 +62,6 @@ module.exports = (app) => {
         context: {
           opticsContext: OpticsAgent.context(req),
           currentUser: res.locals.user,
-          checkOrgPermission: checkOrgPermission
         }
       }
     })

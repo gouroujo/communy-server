@@ -1,5 +1,17 @@
 require('dotenv').config()
 
+const mb_auth = [
+  'event_list',
+  'event_view',
+  'event_answer'
+];
+const mod_auth = mb_auth.concat([
+  'event_delete',
+  'event_edit',
+  'event_add_user',
+  'add_user'
+]);
+
 module.exports = {
   MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost/orgaa',
   REDIS_URI: process.env.REDIS_URI || 'redis://localhost:6379',
@@ -34,8 +46,8 @@ module.exports = {
     MAYBE: 'mb',
   },
   orgPermissions: {
-    mb: ['events', 'viewEvents'],
-    mod: ['events', 'viewEvents', 'addUsers', 'createEvent'],
+    mb: mb_auth,
+    mod: mod_auth,
     ad: ['*']
   }
 }

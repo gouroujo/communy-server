@@ -22,12 +22,12 @@ module.exports = {
       }, {
         "$push": { yes: user },
         "$pull": { no: { ref: user.ref } },
-        "$pull": { maybe: { ref: user.ref } },
+        "$pull": { mb: { ref: user.ref } },
         "$inc": { nusers: 1 },
       });
     })
     .then(res => {
-      if(!res.isOk()) return new Error('Update error')
+      if(res.ok !== 1) return new Error('Update error')
       return res;
     });
   },
@@ -49,7 +49,7 @@ module.exports = {
             },
             update: {
               "$pull": { yes: { ref: user.ref } },
-              "$push": { maybe: user },
+              "$push": { mb: user },
               "$inc": { nusers: -1 },
             }
           },
@@ -63,14 +63,14 @@ module.exports = {
                   "$elemMatch": { ref: user.ref }
                 }
               },
-              maybe: {
+              mb: {
                 "$not": {
                   "$elemMatch": { ref: user.ref }
                 }
               }
             },
             update: {
-              "$push": { maybe: user },
+              "$push": { mb: user },
               "$pull": { no: { ref: user.ref } },
             },
           }
@@ -78,7 +78,7 @@ module.exports = {
       ]);
     })
     .then(res => {
-      if(!res.isOk()) return new Error('Bulk error')
+      if(res.ok !== 1) return new Error('Bulk error')
       return res;
     });
   },
@@ -123,14 +123,14 @@ module.exports = {
             },
             update: {
               "$push": { no: user },
-              "$pull": { maybe: { ref: user.ref } },
+              "$pull": { mb: { ref: user.ref } },
             },
           }
         }
       ]);
     })
     .then(res => {
-      if(!res.isOk()) return new Error('Bulk error')
+      if(res.ok !== 1) return new Error('Bulk error')
       return res;
     });
   },

@@ -18,7 +18,7 @@ const SubOrganisationSchema = new Schema({
     index: true
   }, // status
   ack: Boolean,
-  ref: { type: Schema.Types.ObjectId, unique: true}, // organisation id
+  ref: { type: Schema.Types.ObjectId }, // organisation id
   t: Date,
 });
 
@@ -43,8 +43,14 @@ SubOrganisationSchema.pre('save', function(next) {
 const UserSchema = new Schema({
   firstname:  String,
   lastname: String,
-  password: String,
-  salt: String,
+  password: {
+    type: String,
+    select: false
+  },
+  salt: {
+    type: String,
+    select: false
+  },
   email: {
     type: String,
     index: true,
@@ -64,6 +70,20 @@ const UserSchema = new Schema({
 }, {
   timestamps: true
 });
+
+UserSchema.index(
+  {
+    firstname: 'text',
+    lastname: 'text',
+    email: 'text',
+  }, {
+    name: 'user search',
+    weights: {
+      lastname: 3,
+      firstname: 1,
+      email: 2,
+    }
+  });
 
 UserSchema.virtual('fullname')
   .get(function() { return this.firstname + ' ' + this.lastname; })
@@ -148,9 +168,6 @@ UserSchema.statics.findByToken = function(token) {
     }
   }).then(payload => {
     return this.findById(payload.id)
-  }).catch(e => {
-    console.log(e);
-    return null;
   })
 }
 
@@ -164,10 +181,7 @@ UserSchema.statics.findByPublicToken = function(token) {
     }
   }).then(userId => {
     return this.findById(userId)
-  }).catch(e => {
-    console.log(e);
-    return null;
-  });
+  })
 }
 UserSchema.statics.confirmByPublicToken = function(token) {
   return new Promise((resolve, reject) => {
@@ -182,10 +196,6 @@ UserSchema.statics.confirmByPublicToken = function(token) {
       $set: { confirmed: 'true' }
     }, { new: false })
   })
-  .catch(e => {
-    console.log(e);
-    return null;
-  });
 }
 
 module.exports = UserSchema;

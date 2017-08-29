@@ -7,7 +7,8 @@ module.exports = function(user, options) {
       if(!u) return new Error('User Not Found');
       return Object.assign({
           ref: u._id,
-          fullname: u.fullname,
+          firstname: u.firstname,
+          lastname: u.lastname,
           avatar: u.avatar,
           name: u.name,
           t: Date.now(),

@@ -14,8 +14,8 @@ var users = lodash.times(nOrgs * 10, function(i) {
     _id: mongoose.Types.ObjectId(),
     firstname: faker.name.firstName(),
     lastname: faker.name.lastName(),
-    password: faker.internet.password(),
-    email: faker.internet.email(),
+    password: 'azertyuiop',
+    email: 'test' + i + '@orgaa.org',
     birthday: faker.date.past(),
     birthplace: faker.address.city(),
     avatarUrl: 'http://lorempixel.com/200/200/people/' + (i%10),
@@ -29,8 +29,9 @@ var users = lodash.times(nOrgs * 10, function(i) {
 var events = [];
 
 var organisations = lodash.times(nOrgs, function(i) {
-  const size = lodash.random(3, nOrgs * 4);
-  const selectedUsers = lodash.sampleSize(users, size);
+  const nusers = lodash.random(3, nOrgs * 4);
+  const nevents = lodash.floor(nusers / 5)
+  const selectedUsers = lodash.sampleSize(users, nusers);
 
   const org = {
     _id: mongoose.Types.ObjectId(),
@@ -38,29 +39,30 @@ var organisations = lodash.times(nOrgs, function(i) {
     description: faker.lorem.paragraphs(),
     coverUrl: 'http://lorempixel.com/600/400/nature/' + (i%10),
     logoUrl: 'http://lorempixel.com/200/200/abstract/' + (i%10),
-    events: [],
+    nevents: nevents,
+    nusers: nusers,
     users: [],
   }
 
-  org.users = selectedUsers.map((u, i) => {
-    const st = (i === 0) ? orgStatus.ADMIN : lodash.sample(lodash.values(orgStatus));
-    u.organisations.push({
-      title: org.title,
-      logoUrl: org.logoUrl,
-      status: st,
-      _id: org._id,
-    });
-    return {
-      fn: u.firstname + ' ' + u.lastname,
-      em: u.email,
-      av: u.avatarUrl,
-      st: st,
-      _id: u._id,
-    }
-  })
+  // org.users = selectedUsers.map((u, i) => {
+  //   const st = (i === 0) ? orgStatus.ADMIN : lodash.sample(lodash.values(orgStatus));
+  //   u.organisations.push({
+  //     title: org.title,
+  //     logoUrl: org.logoUrl,
+  //     status: st,
+  //     _id: org._id,
+  //   });
+  //   return {
+  //     fn: u.firstname + ' ' + u.lastname,
+  //     em: u.email,
+  //     av: u.avatarUrl,
+  //     st: st,
+  //     _id: u._id,
+  //   }
+  // })
 
 
-  lodash.times(lodash.floor(size / 5), function() {
+  lodash.times(nevents, function() {
 
     const startDate = moment()
       .date(lodash.random(-30, 60))
@@ -74,7 +76,7 @@ var organisations = lodash.times(nOrgs, function(i) {
       minutes: lodash.random(30, 90),
     });
 
-    const userEvent = lodash.sampleSize(selectedUsers, lodash.random(3, size));
+    // const userEvent = lodash.sampleSize(selectedUsers, lodash.random(3, nusers));
 
     const event = {
       _id: mongoose.Types.ObjectId(),
@@ -90,30 +92,30 @@ var organisations = lodash.times(nOrgs, function(i) {
       users: [],
     }
 
-    event.users = userEvent.map((u, i) => {
-      const st = lodash.sample(lodash.values(eventStatus));
-      u.events.push({
-        title: event.title,
-        status: st,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        _id: event._id,
-        org: org._id,
-      })
-      return {
-        fn: u.firstname + ' ' + u.lastname,
-        av: u.avatarUrl,
-        st: st,
-        _id: u._id,
-      }
-    });
+    // event.users = userEvent.map((u, i) => {
+    //   const st = lodash.sample(lodash.values(eventStatus));
+    //   u.events.push({
+    //     title: event.title,
+    //     status: st,
+    //     startTime: event.startTime,
+    //     endTime: event.endTime,
+    //     _id: event._id,
+    //     org: org._id,
+    //   })
+    //   return {
+    //     fn: u.firstname + ' ' + u.lastname,
+    //     av: u.avatarUrl,
+    //     st: st,
+    //     _id: u._id,
+    //   }
+    // });
 
-    org.events.push({
-      title: event.title,
-      startTime: event.startTime,
-      endTime: event.endTime,
-      _id: event._id
-    });
+    // org.events.push({
+    //   title: event.title,
+    //   startTime: event.startTime,
+    //   endTime: event.endTime,
+    //   _id: event._id
+    // });
 
     events.push({
       insertOne: {

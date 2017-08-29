@@ -9,6 +9,7 @@ const app = express();
 
 app.set('trust proxy', 1);
 app.use(helmet());
+
 require('./graphql')(app);
 require('./auth')(app);
 
