@@ -96,6 +96,7 @@ input OrganisationInput {
 input AddUserToOrganisationInput {
   email: String
   userId: ID
+  emails: [String!]
 }
 
 input SetRoleInOrganisationInput {

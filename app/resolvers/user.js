@@ -60,12 +60,21 @@ module.exports = {
   },
 
   OrganisationUser: {
+    id(user) {
+      return user.id || user._id;
+    },
     fullname(user) {
-      console.log(user)
+      if (!user.firstname && !user.lastname) return user.email;
       return `${user.firstname} ${user.lastname}`;
     },
     events(user, { before, after, limit, offset, answer }, { currentUser }, info) {
       return [];
+    },
+    isWaitingAck(user) {
+      return user.wt_ack || false;
+    },
+    isWaitingConfirm(user) {
+      return user.wt_confirm || false;
     },
   },
 
@@ -75,19 +84,12 @@ module.exports = {
       return models.User.findById(id);
     },
 
-    users(parent, { organisationId, limit, offset, search }, { currentUser }) {
+    users(parent, { organisationId, limit, offset }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
 
       // if (organisationId && ) return new Error('Forbidden');
 
-      const query = search ? (
-        models.User.find(
-          { $text : { $search : search } },
-          { score : { $meta: "textScore" } }
-        ).sort({ score : { $meta : 'textScore' } })
-      ) : (
-        models.User.find().sort('firstname')
-      );
+      const query = models.User.find().sort('firstname');
 
       // let query;
       //
@@ -103,6 +105,21 @@ module.exports = {
       // }
 
       return query.limit(limit).skip(offset).exec()
+    },
+
+    searchUsers(parent, { emails, limit, offset }, { currentUser }) {
+      return models.User.find({
+        email: { $in: emails }
+      })
+      .limit(limit)
+      .skip(offset)
+      .lean()
+      .exec()
+      .then(users => {
+        return emails.map(email => {
+          return users.find(u => u.email === email) || { email }
+        });
+      });
     },
 
     me(parent, args, { currentUser }) {

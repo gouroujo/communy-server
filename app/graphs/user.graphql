@@ -3,12 +3,19 @@ extend type Query {
     id: ID!
     organisationId: ID!
   ): User
+
   users (
     organisationId: ID
-    search: String
     limit: Int
     offset: Int
   ): [User!]
+
+  searchUsers (
+    emails: [String]!
+    limit: Int
+    offset: Int
+  ): [User!]
+
   me: User
 }
 
@@ -28,7 +35,7 @@ extend type Mutation {
 }
 
 type User {
-  id: ID!
+  id: ID
   firstname: String
   lastname: String
   fullname: String
@@ -67,6 +74,7 @@ type User {
 }
 
 type OrganisationUser {
+  id: ID!
   ref: ID!
   firstname: String
   lastname: String
@@ -87,6 +95,8 @@ type OrganisationUser {
   ): [Event!]
 
   role: OrganisationRole
+  isWaitingAck: Boolean!
+  isWaitingConfirm: Boolean!
 }
 
 input UserUpdateInput {

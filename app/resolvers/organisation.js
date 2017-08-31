@@ -97,12 +97,17 @@ module.exports = {
 
     user(organisation, { id }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
-      let user = organisation.users.find(u => (String(u.ref) === id));
-      if (!user) user = organisation.wt_ack.find(u => (String(u.ref) === id));
-      if (!user) user = organisation.wt_confirm.find(u => (String(u.ref) === id));
-      if (!user) return new Error('User Not Found');
 
-      return user;
+      let user = organisation.users.find(u => (String(u.ref) === id));
+      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: false });
+
+      user = organisation.wt_ack.find(u => (String(u.ref) === id));
+      if (user) return Object.assign(user, { wt_ack: true, wt_confirm: false });
+
+      user = organisation.wt_confirm.find(u => (String(u.ref) === id));
+      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: true });
+
+      if (!user) return new Error('User Not Found');
     },
 
     nevents(organisation) {
@@ -198,19 +203,39 @@ module.exports = {
     deleteOrganisation(parent, { id }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${id}:delete`)) return new Error('Forbidden');
-      return models.Organisation.findByIdAndRemove(id)
+      return models.Organisation.findByIdAndRemove(id);
     },
 
     addUserToOrganisation(parent, { id, input }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${id}:addUser`)) return new Error('Forbidden');
-      if (!input.userId && !input.email) return new Error('Bad Request');
-
-      return (input.userId ?
-        models.User.findById(userId) : models.User.findOneAndCreate({ email: input.email }, { email: input.email }, { new: true, upsert: true })
-      ).then(user => {
-        return registerToOrganisation(user, id);
-      }).then(() => models.Organisation.findById(id));
+      // ----
+      if (input.userId) {
+        return models.User.findById(input.userId)
+          .then(user => registerToOrganisation(user, id))
+          .then(() => models.Organisation.findById(id));
+      }
+      // ----
+      if (input.email) {
+        return models.User.findOneAndCreate({ email: input.email }, { email: input.email }, { new: true, upsert: true })
+          .then(user => registerToOrganisation(user, id))
+          .then(() => models.Organisation.findById(id));
+      }
+      // ----
+      if (input.emails) {
+        return models.User.bulkWrite(input.emails.map(e => ({
+          updateOne: {
+            filter: { email: e },
+            update: { $set : { email: e } },
+            upsert: true,
+          }
+        })), { ordered: false })
+        .then(() => models.User.find({ email: { $in: input.emails }}))
+        .then(users => registerToOrganisation(users, id))
+        .then(() => models.Organisation.findById(id));
+      }
+      // ----
+      return new Error('Bad Request');
     },
 
     setRoleInOrganisation(parent, { id, input }, { currentUser }) {

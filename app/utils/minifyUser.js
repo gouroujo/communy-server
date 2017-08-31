@@ -9,8 +9,8 @@ module.exports = function(user, options) {
           ref: u._id,
           firstname: u.firstname,
           lastname: u.lastname,
+          email: u.email,
           avatar: u.avatar,
-          name: u.name,
           t: Date.now(),
         }, options)
     })

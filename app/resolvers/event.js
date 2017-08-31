@@ -58,7 +58,7 @@ module.exports = {
 
     events(parent, { before, after, limit, offset, organisationId }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
-      if (organisationId && !currentUser.permissions.check(`organisation:${organisationId}:events`)) return new Error('Forbidden');
+      if (organisationId && !currentUser.permissions.check(`organisation:${organisationId}:event_list`)) return new Error('Forbidden');
 
       const query = models.Event.find();
       if (after) query.gte('endTime', after)
@@ -79,7 +79,7 @@ module.exports = {
       return models.Event.findById(id).then(event => {
         if (!event) return new Error('Not found');
         if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-        if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event`))return new Error('Forbidden');
+        if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_view`))return new Error('Forbidden');
 
         return event;
       });

@@ -12,6 +12,7 @@ const { orgStatus } = require('../config');
 const OrganisationUserSchema = new Schema({
   firstname: String,
   lastname: String,
+  email: String,
   avatar: String,
   role: {
     type: String,
@@ -19,21 +20,23 @@ const OrganisationUserSchema = new Schema({
     index: true
   }, // status
   t: Date,
-  ref: { type: Schema.Types.ObjectId, ref: 'User'}
+  ref: { type: Schema.Types.ObjectId, ref: 'User', index: true }
 });
 
 const OrganisationWtAckUserSchema = new Schema({
   firstname: String,
   lastname: String,
+  email: String,
   avatar: String,
-  ref: { type: Schema.Types.ObjectId, ref: 'User'}
+  ref: { type: Schema.Types.ObjectId, ref: 'User', index: true }
 });
 
 const OrganisationWtConfirmUserSchema = new Schema({
   firstname: String,
   lastname: String,
+  email: String,
   avatar: String,
-  ref: { type: Schema.Types.ObjectId, ref: 'User'}
+  ref: { type: Schema.Types.ObjectId, ref: 'User', index: true }
 });
 
 const OrganisationSchema = new Schema({

@@ -67,6 +67,7 @@ const UserSchema = new Schema({
     sparse: true,
   },
   organisations: [SubOrganisationSchema],
+  norganisations: { type: Number, default: 0 }
 }, {
   timestamps: true
 });
