@@ -150,8 +150,10 @@ module.exports = {
   },
 
   Query: {
-    organisations(_, { status, limit, offset }) {
-      return models.Organisation.find({ status })
+    organisations(_, { limit, offset }) {
+      return models.Organisation.find({
+        secret: false
+      })
         .skip(offset)
         .limit(limit)
         .lean();

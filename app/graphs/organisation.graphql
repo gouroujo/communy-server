@@ -49,6 +49,7 @@ type Organisation {
   id: ID!
   title: String
   description: String
+  secret: Boolean
   logo: String
   cover: String
   coverUploadOpts: String
@@ -94,8 +95,9 @@ type Organisation {
 input OrganisationInput {
   title: String!
   description: String
-  logoUrl: String
-  coverUrl: String
+  secret: Boolean!
+  logo: String
+  cover: String
 }
 
 input AddUserToOrganisationInput {

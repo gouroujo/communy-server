@@ -44,6 +44,7 @@ const OrganisationSchema = new Schema({
   description: String,
   logo: String,
   cover: String,
+  secret: { type: Number, default: false, index: true },
   nusers: { type: Number, default: 0 },
   nevents: { type: Number, default: 0 },
   nwt_confirm: { type: Number, default: 0 },
