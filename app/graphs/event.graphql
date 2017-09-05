@@ -36,14 +36,8 @@ extend type Mutation {
   addUserToEvent (
     id: ID!
     input: addUserToEventInput!
-  ): Event
+  ): Event!
 
-}
-
-type EventUser {
-  fullname: String
-  avatar: String
-  answer: EventAnswer
 }
 
 type Event {
@@ -55,7 +49,16 @@ type Event {
   allDay: Boolean
   organisation: Organisation!
   nusers: Int!
-  users: [EventUser!]
+  nanswer: Int
+  nno: Int
+  nmb: Int
+  
+  users(
+    limit: Int
+    yes: Boolean
+    no: Boolean
+    mb: Boolean
+  ): [EventUser!]
   address: Address
   answer: EventAnswer
 }
@@ -69,6 +72,6 @@ input EventInput {
 }
 
 input addUserToEventInput {
-  userId: ID!
+  userId: ID
   answer: EventAnswer!
 }

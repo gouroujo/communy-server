@@ -13,7 +13,7 @@ const mod_auth = mb_auth.concat([
 ]);
 
 module.exports = {
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost/orgaa',
+  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost/communy',
   REDIS_URI: process.env.REDIS_URI || 'redis://localhost:6379',
   DEBUG: process.env.DEBUG || process.env.NODE_ENV !== 'production',
   PRODUCTION: process.env.NODE_ENV === 'production',

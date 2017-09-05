@@ -38,6 +38,7 @@ module.exports = {
       minifyEvent(e)
     ])
     .then(([ user, event]) => {
+      console.log(event)
       return models.Event.bulkWrite([
         {
           updateOne: {
@@ -57,7 +58,7 @@ module.exports = {
         {
           updateOne: {
             filter: {
-              _id: event._id,
+              _id: event.ref,
               yes: {
                 "$not": {
                   "$elemMatch": { ref: user.ref }
@@ -67,14 +68,42 @@ module.exports = {
                 "$not": {
                   "$elemMatch": { ref: user.ref }
                 }
-              }
+              },
+              // no: {
+              //   "$elemMatch": { ref: user.ref }
+              // }
             },
             update: {
               "$push": { mb: user },
               "$pull": { no: { ref: user.ref } },
             },
           }
-        }
+        },
+        // {
+        //   updateOne: {
+        //     filter: {
+        //       _id: event.ref,
+        //       yes: {
+        //         "$not": {
+        //           "$elemMatch": { ref: user.ref }
+        //         }
+        //       },
+        //       mb: {
+        //         "$not": {
+        //           "$elemMatch": { ref: user.ref }
+        //         }
+        //       },
+        //       no: {
+        //         "$not": {
+        //           "$elemMatch": { ref: user.ref }
+        //         }
+        //       },
+        //     },
+        //     update: {
+        //       "$push": { mb: user },
+        //     },
+        //   }
+        // }
       ]);
     })
     .then(res => {

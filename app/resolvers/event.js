@@ -8,35 +8,66 @@ module.exports = {
 
   Event: {
     id(event) {
-      return event._id || event.id;
+      return event.ref || event._id || event.id;
     },
+
     nusers(event) {
-      return event.nusers || 0;
+      return event.nusers;
     },
+
+    nanswer(event) {
+      return (event.yes ? event.yes.length : 0 )+ (event.no ? event.no.length : 0) + (event.mb ? event.mb.length : 0)
+    },
+    nno(event) {
+      return event.no && event.no.length
+    },
+    nmb(event) {
+      return event.mb && event.mb.length
+    },
+
     answer(event, { userId }, { currentUser }) {
-      if(event.answer) return event.answer;
-      if(!currentUser) return null;
-      if (event.yes && event.yes.find(u => String(u.ref) == (userId || currentUser.id))) return 'yes';
-      if (event.maybe && event.maybe.find(u => String(u.ref) == (userId || currentUser.id))) return 'mb';
-      if (event.no && event.no.find(u => String(u.ref) == (userId || currentUser.id))) return 'no';
+      if (event.answer) return event.answer;
+      if (!currentUser) return null;
+
+      if (event.yes && event.yes.find(u => String(u.ref) === String(userId || currentUser.id))) return 'yes';
+      if (event.mb && event.mb.find(u => String(u.ref) === String(userId || currentUser.id))) return 'mb';
+      if (event.no && event.no.find(u => String(u.ref) === String(userId || currentUser.id))) return 'no';
+
       return null;
     },
-    users(event, args, ctx, info) {
-      const fields = difference(getFieldNames(info), [
-        'id', 'fullname', 'avatarUrl', 'answer', '__typename'
-      ])
-      if (fields.length === 0) {
-        return event.yes.map(u => ({
-          id: u.ref,
-          fullname: u.fn,
-          avatarUrl: u.av,
-          answer: 'yes',
-        }))
+
+    users(event, { limit, yes, no, mb }, { currentUser }, info) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      let users;
+      if (yes) {
+        // if (!currentUser.permissions.check(`organisation:${organisation._id}:addUser`)) return new Error('Forbidden');
+        users = event.yes;
+      } else if (no) {
+        // if (!currentUser.permissions.check(`organisation:${organisation._id}:addUser`)) return new Error('Forbidden');
+        users = event.no;
+      } else if (mb){
+        users = event.mb
       } else {
-        return models.User.find({
-          _id: { $in: event.yes.map(u => u.ref ) }
-        })
+        users = [].concat(event.yes, event.no, event.mb)
       }
+      return users;
+      //
+      // const fields = difference(getFieldNames(info), [
+      //   'id', 'fullname', 'avatarUrl', 'answer', '__typename'
+      // ])
+      // if (fields.length === 0) {
+      //   return event.yes.map(u => ({
+      //     id: u.ref,
+      //     fullname: u.fn,
+      //     avatarUrl: u.av,
+      //     answer: 'yes',
+      //   }))
+      // } else {
+      //   return models.User.find({
+      //     _id: { $in: event.yes.map(u => u.ref ) }
+      //   })
+      // }
     },
     organisation(event, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
@@ -143,17 +174,17 @@ module.exports = {
             if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_answer`))return new Error('Forbidden');
           }
 
-          if (input.answer === 'YES') {
+          if (input.answer === 'yes') {
             return answerYesToEvent(
               input.userId || currentUser,
               event
             ).then(() => models.Event.findById(id))
-          } else if (input.answer === 'NO') {
+          } else if (input.answer === 'no') {
             return answerNoToEvent(
               input.userId || currentUser,
               event
             ).then(() => models.Event.findById(id))
-          } else if (input.answer === 'MAYBE') {
+          } else if (input.answer === 'mb') {
             return answerMaybeToEvent(
               input.userId || currentUser,
               event

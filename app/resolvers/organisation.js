@@ -15,16 +15,16 @@ const { orgMemberStatus, orgStatus, CLOUDINARY_KEY } = require('../config');
 
 module.exports = {
   Organisation: {
+    id(organisation) {
+      return organisation.ref || organisation._id || organisation.id;
+    },
+
     logo(organisation) {
       return organisation.logo || organisation.logoUrl;
     },
 
     cover(organisation) {
       return organisation.cover || organisation.coverUrl;
-    },
-
-    id(organisation) {
-      return organisation._id || organisation.id;
     },
 
     nusers(organisation) {
@@ -91,20 +91,20 @@ module.exports = {
       //   avatar: user.avatar,
       //   role: user.role,
       // }));
-      return users;
+      return users.map(user => Object.assign(user, { organisationId: organisation._id }));
     },
 
     user(organisation, { id }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
 
       let user = organisation.users.find(u => (String(u.ref) === id));
-      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: false });
+      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: false, organisationId: organisation._id });
 
       user = organisation.wt_ack.find(u => (String(u.ref) === id));
-      if (user) return Object.assign(user, { wt_ack: true, wt_confirm: false });
+      if (user) return Object.assign(user, { wt_ack: true, wt_confirm: false, organisationId: organisation._id });
 
       user = organisation.wt_confirm.find(u => (String(u.ref) === id));
-      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: true });
+      if (user) return Object.assign(user, { wt_ack: false, wt_confirm: true, organisationId: organisation._id });
 
       if (!user) return new Error('User Not Found');
     },
@@ -114,25 +114,17 @@ module.exports = {
       return organisation.events.length;
     },
 
-    events(organisation, args, ctx, info) {
-      const fields = difference(getFieldNames(info), [
-        'id', 'title', 'startTime', 'endTime'
-      ])
-      if (fields.length === 0) {
-        return filterEvents(organisation.events, args).map(e => ({
-          id: e._id,
-          title: e.title,
-          startTime: e.startTime,
-          endTime: e.endTime,
-        }))
-      } else {
-        const query = models.Event.find({
-          _id: { $in: organisation.events.map(e => e._id ) }
-        });
-        if (args.after) query.gte('endTime', args.after)
-        if (args.before) query.lte('startTime', args.before)
-        return query.limit(args.limit).skip(args.offset).lean().exec()
-      }
+    events(organisation, { after, before, limit, offset }, { currentUser }, info) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${organisation._id}:event_list`)) return new Error('Forbidden');
+
+      const query = models.Event.find({
+        "organisation.ref": organisation._id
+      })
+
+      if (after) query.gte('endTime', after)
+      if (before) query.lte('startTime', before)
+      return query.limit(limit).skip(offset).lean().exec()
     },
 
     coverUploadOpts(organisation) {

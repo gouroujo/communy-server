@@ -2,9 +2,11 @@ const { Schema } = require('mongoose');
 const AddressSchema = require('./address');
 
 const SubUserSchema = new Schema({
-  fn: String, // user Fullname
-  av: String, // user avatarUrl
-  ref: { type: Schema.Types.ObjectId, unique: true, sparse: true} // user id
+  firstname: String,
+  lastname: String,
+  email: String,
+  avatar: String,
+  ref: { type: Schema.Types.ObjectId, index: true, sparse: true} // user id
 });
 
 const EventSchema = new Schema({
@@ -18,7 +20,7 @@ const EventSchema = new Schema({
     title: String,
     logo: String,
   },
-  nusers: Number,
+  nusers: { type: Number, default: 0 },
   yes: [SubUserSchema],
   mb: [SubUserSchema],
   no: [SubUserSchema],

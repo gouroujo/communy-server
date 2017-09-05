@@ -68,13 +68,31 @@ module.exports = {
       return `${user.firstname} ${user.lastname}`;
     },
     events(user, { before, after, limit, offset, answer }, { currentUser }, info) {
-      return [];
+      if (!user) return [];
+      const query = models.Event.find({});
+      query.select('-yes -no -mb');
+      query.where('organisation.ref').equals(user.organisationId);
+      if (answer) query.where(answer).elemMatch({ ref: user._id || user.id });
+      if (after) query.gte('endTime', after);
+      if (before) query.lte('startTime', before);
+
+      return query.sort('endTime').limit(limit).skip(offset).lean().exec();
     },
     isWaitingAck(user) {
       return user.wt_ack || false;
     },
     isWaitingConfirm(user) {
       return user.wt_confirm || false;
+    },
+  },
+
+  EventUser: {
+    id(user) {
+      return user.id || user._id;
+    },
+    fullname(user) {
+      if (!user.firstname && !user.lastname) return user.email;
+      return `${user.firstname} ${user.lastname}`;
     },
   },
 
@@ -129,10 +147,13 @@ module.exports = {
   },
 
   Mutation: {
-    updateProfile(parent, { input }) {
+    editUser(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (id !== String(currentUser.id)) return new Error('Forbidden');
+
       return models.User.findByIdAndUpdate(
-        input.id,
-        omit(input, 'id'),
+        id,
+        input,
         { new: true }
       )
     },
@@ -143,31 +164,12 @@ module.exports = {
           if (!organisation) return new Error('Not Found');
           return candidateToOrganisation(currentUser, organisationId)
             .then(() => {
-              currentUser.organisations.push(organisation)
+              // currentUser.organisations.push(organisation)
               return models.User.findById(currentUser.id)
             })
         })
 
     },
 
-    answerToEvent(parent, { eventId, answer }, { currentUser }) {
-      if (!currentUser) return new Error('Unauthorized');
-
-      return models.Event.findById(eventId)
-        .then(event => {
-          if (!event) return new Error('Not found');
-          if (answer === 'yes') {
-            return answerYesToEvent(currentUser, event)
-          } else if (answer === 'no') {
-            return answerNoToEvent(currentUser, event)
-          } else if (answer === 'mb') {
-            return answerMaybeToEvent(currentUser, event)
-          }
-          return event;
-        })
-        .then(() => {
-          return models.User.findById(currentUser.id);
-        });
-    }
   }
 }

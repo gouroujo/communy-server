@@ -8,7 +8,6 @@ module.exports = function(event, options) {
       return Object.assign({
         ref: e._id,
         title: e.title,
-        logo: e.logo,
         t: Date.now(),
       }, options);
     })
