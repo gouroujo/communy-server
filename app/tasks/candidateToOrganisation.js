@@ -57,10 +57,15 @@ module.exports = function(u, o) {
                   $elemMatch: { ref: user.ref }
                 }
               },
+              users: {
+                $not: {
+                  $elemMatch: { ref: user.ref }
+                }
+              },
             },
             update: {
               $push: { wt_confirm: user },
-              $pull: { user: { ref: user.ref } }
+              $inc: { nwt_confirm: 1 },
             }
           }
         },
@@ -71,12 +76,17 @@ module.exports = function(u, o) {
               wt_ack: {
                 $elemMatch: { ref: user.ref }
               },
+              users: {
+                $not: {
+                  $elemMatch: { ref: user.ref }
+                }
+              },
             },
             update: {
               $push: { user: Object.assign({}, user, { role: orgStatus.MEMBER }) },
-              $pull: { wt_confirm: { ref: user.ref } },
               $pull: { wt_ack: { ref: user.ref } },
               $inc: { nusers: 1 },
+              $inc: { nwt_ack: -1 },
             }
           }
         }

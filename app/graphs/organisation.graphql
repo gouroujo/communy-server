@@ -8,7 +8,7 @@ extend type Query {
   ): [Organisation!]
 
   organisation (
-    id: ID
+    id: ID!
   ): Organisation!
 
   createOrganisation: Organisation!
@@ -32,6 +32,11 @@ extend type Mutation {
   addUserToOrganisation(
     id: ID!
     input: AddUserToOrganisationInput!
+  ): Organisation
+
+  removeUserFromOrganisation (
+    id: ID!
+    input: RemoveUserFromOrganisationInput!
   ): Organisation
 
   setRoleInOrganisation(
@@ -97,6 +102,10 @@ input AddUserToOrganisationInput {
   email: String
   userId: ID
   emails: [String!]
+}
+
+input RemoveUserFromOrganisationInput {
+  userId: ID!
 }
 
 input SetRoleInOrganisationInput {

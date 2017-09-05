@@ -70,8 +70,6 @@ module.exports = function(u, o, role) {
             },
             update: {
               $push: { users: user },
-              $pull: { wt_confirm: { ref: user.ref } },
-              $pull: { wt_ack: { ref: user.ref } },
               $inc: { nusers: 1 },
             }
 

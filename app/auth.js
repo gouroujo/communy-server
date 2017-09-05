@@ -31,6 +31,7 @@ module.exports = (app) => {
               facebookId: fbuser.id,
               avatar: fbuser.picture ? fbuser.picture.data.url : null,
               confirmed: true,
+              userCreated: true,
             })
             .then((user, err) => {
               if(err) return res.sendStatus(500);
@@ -88,6 +89,7 @@ module.exports = (app) => {
           firstname: name ? name.substr(0, name.indexOf('.')) : 'Chuck',
           lastname: name ? name.substr(name.indexOf('.') + 1) : 'Noris',
           confirmed: false,
+          userCreated: true,
         }).then(user => {
           queue.create(jobs.SEND_CONFIRM_EMAIL, { userId: user._id }).priority('high').save();
           return user.getToken()
@@ -130,6 +132,7 @@ module.exports = (app) => {
           lastname: lastname,
           birthday: birthday,
           confirmed: false,
+          userCreated: true,
         })
         .then(user => user.getToken())
         .then(token => {

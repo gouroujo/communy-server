@@ -5,9 +5,11 @@ const getFieldNames = require('../utils/getFields');
 const filterEvents = require ('../utils/filterEvents');
 const signCloudinary = require('../utils/signCloudinary');
 const minifyUser = require('../utils/minifyUser');
+const minifyOrganisation = require('../utils/minifyOrganisation');
 
 const setRoleInOrganisation = require('../tasks/setRoleInOrganisation');
 const registerToOrganisation = require('../tasks/registerToOrganisation');
+const removeFromOrganisation = require('../tasks/removeFromOrganisation');
 
 const { orgMemberStatus, orgStatus, CLOUDINARY_KEY } = require('../config');
 
@@ -26,18 +28,15 @@ module.exports = {
     },
 
     nusers(organisation) {
-      if (!organisation.users) return 0;
-      return organisation.users.length;
+      return organisation.nusers;
     },
 
     nwaitingAck(organisation) {
-      if (!organisation.wt_ack) return 0;
-      return organisation.wt_ack.length;
+      return organisation.nwt_ack;
     },
 
     nwaitingConfirm(organisation) {
-      if (!organisation.wt_confirm) return 0;
-      return organisation.wt_confirm.length;
+      return organisation.nwt_confirm;
     },
 
     role(organisation, args, { currentUser }) {
@@ -168,25 +167,25 @@ module.exports = {
 
     organisation(_, { id }) {
       return models.Organisation.findById(id).lean()
-        .then(res => {
-          if (res) return res;
-          return {
-            _id: mongoose.Types.ObjectId()
-          };
-        });
     },
   },
 
   Mutation: {
     createOrganisation(_, { input }, { currentUser }) {
-      return models.Organisation.create(input)
-        .then(organisation => {
-          return setRoleInOrganisation(currentUser, organisation, orgStatus.ADMIN)
-          .then(() => models.Organisation.findById(organisation.id));
-        })
-        .catch(e => {
-          return new Error(e);
-        })
+      return minifyUser(currentUser, { role: orgStatus.ADMIN })
+        .then(user => models.Organisation.create(Object.assign({}, input, {
+          nusers: 1,
+          users: [user]
+        })))
+        .then(organisation =>
+          minifyOrganisation(organisation, { role: orgStatus.ADMIN , ack: true })
+          .then(o => models.User.findByIdAndUpdate(currentUser.id, {
+            $push: { organisations:  o},
+            $inc: { norganisations: 1 },
+          }))
+          .then(() => organisation)
+        )
+        .catch(e => console.log(e))
     },
 
     editOrganisation(parent, { id, input }, { currentUser }) {
@@ -203,7 +202,68 @@ module.exports = {
     deleteOrganisation(parent, { id }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${id}:delete`)) return new Error('Forbidden');
-      return models.Organisation.findByIdAndRemove(id);
+
+      return models.Organisation.findByIdAndRemove(id)
+        .then(organisation => {
+          return Promise.all([
+            models.Event.bulkWrite([
+              {
+                deleteMany: {
+                  filter: {
+                    "organisation.ref": organisation.id
+                  }
+                }
+              },
+            ]),
+            models.User.bulkWrite([
+              {
+                deleteMany: {
+                  filter: {
+                    userCreated: { $ne: true },
+                    organisations: {
+                      $elemMatch: { ref: organisation.id },
+                      $size: 1,
+                    }
+                  }
+                }
+              },
+              {
+                updateMany: {
+                  filter: {
+                    organisations: {
+                      $elemMatch: {
+                        $or: [
+                          { ref: organisation.id, ack: false },
+                          { ref: organisation.id, role: null },
+                        ]
+                      },
+                    },
+                    $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+                  },
+                  update: {
+                    $pull: { organisations: { ref: organisation.id } },
+                  }
+                },
+              },
+              {
+                updateMany: {
+                  filter: {
+                    organisations: {
+                      $elemMatch: { ref: organisation.id, ack: true, role: { $exists: true, $ne: null } },
+                    },
+                    $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+                  },
+                  update: {
+                    $pull: { organisations: { ref: organisation.id } },
+                    $inc: { norganisations: -1 }
+                  }
+                },
+              },
+            ])
+          ])
+          .then(() => organisation);
+        })
+        .catch(e => console.log(e))
     },
 
     addUserToOrganisation(parent, { id, input }, { currentUser }) {
@@ -213,36 +273,52 @@ module.exports = {
       if (input.userId) {
         return models.User.findById(input.userId)
           .then(user => registerToOrganisation(user, id))
-          .then(() => models.Organisation.findById(id));
+          .then(() => models.Organisation.findById(id))
+          .catch(e => console.log(e));
       }
       // ----
       if (input.email) {
         return models.User.findOneAndCreate({ email: input.email }, { email: input.email }, { new: true, upsert: true })
           .then(user => registerToOrganisation(user, id))
-          .then(() => models.Organisation.findById(id));
+          .then(() => models.Organisation.findById(id))
+          .catch(e => console.log(e));
       }
       // ----
       if (input.emails) {
         return models.User.bulkWrite(input.emails.map(e => ({
           updateOne: {
             filter: { email: e },
-            update: { $set : { email: e } },
+            update: {
+              $set : { email: e },
+            },
             upsert: true,
           }
         })), { ordered: false })
         .then(() => models.User.find({ email: { $in: input.emails }}))
         .then(users => registerToOrganisation(users, id))
-        .then(() => models.Organisation.findById(id));
+        .then(() => models.Organisation.findById(id))
+        .catch(e => console.log(e));
       }
       // ----
       return new Error('Bad Request');
+    },
+
+    removeUserFromOrganisation(parent, { id, input }, { currentUser }) {
+      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser.permissions.check(`organisation:${id}:removeUser`)) return new Error('Forbidden');
+
+      return removeFromOrganisation(input.userId, id)
+        .then(() => models.Organisation.findById(id))
+        .catch(e => console.log(e));
     },
 
     setRoleInOrganisation(parent, { id, input }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${id}:setRole`)) return new Error('Forbidden');
 
-      return setRoleInOrganisation(input.userId, id, input.role).then(() => models.Organisation.findById(id));
+      return setRoleInOrganisation(input.userId, id, input.role)
+        .then(() => models.Organisation.findById(id))
+        .catch(e => console.log(e));
     }
   },
 }

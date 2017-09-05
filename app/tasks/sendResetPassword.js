@@ -6,7 +6,7 @@ const { getResetEmail } = require('../email');
 
 module.exports = (data) => new Promise((resolve, reject) => {
   models.User.findById(data.userId).then(user => {
-    if(!user) return reject('User not found')
+    if (!user) return reject('User not found')
 
     getResetEmail(user).then(({ html, text}) => {
       mailgun.messages().send({

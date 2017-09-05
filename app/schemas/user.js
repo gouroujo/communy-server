@@ -56,6 +56,7 @@ const UserSchema = new Schema({
     index: true,
   },
   confirmed: Boolean,
+  userCreated: { type: Boolean, default: false },
   avatar:   String,
   birthday: Date,
   birthplace: String,
@@ -67,7 +68,7 @@ const UserSchema = new Schema({
     sparse: true,
   },
   organisations: [SubOrganisationSchema],
-  norganisations: { type: Number, default: 0 }
+  norganisations: { type: Number, default: 0 },
 }, {
   timestamps: true
 });
