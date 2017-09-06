@@ -1,0 +1,9 @@
+type Registration {
+  id: ID!
+  role: OrganisationRole
+  joined: Boolean!
+  isWaitingAck: Boolean!
+  isWaitingConfirm: Boolean!
+  createdAt: DateTime!
+  user: User
+}

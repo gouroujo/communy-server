@@ -54,11 +54,21 @@ type Organisation {
   cover: String
   coverUploadOpts: String
 
-  role: OrganisationRole
-  isWaitingAck: Boolean!
-  isWaitingConfirm: Boolean!
-  joined: Boolean!
-  joinedAt: DateTime
+  registration (
+    userId: ID
+  ): Registration
+
+  registrations (
+    role: OrganisationRole
+    limit: Int
+    offset: Int
+    ack: Boolean!
+    confirm: Boolean!
+  ): [Registration]
+
+  user (
+    id: ID!
+  ): User!
 
   events (
     before: Date
@@ -72,24 +82,13 @@ type Organisation {
     after: Date
   ): Int!
 
-  users (
-    limit: Int
-    role: OrganisationRole
-    waiting_ack: Boolean
-    waiting_confirm: Boolean
-  ): [OrganisationUser!]
+  role: OrganisationRole
+  ack: Boolean!
+  confirm: Boolean!
 
-
-  nusers(
-    role: OrganisationRole
-  ): Int!
-
-  nwaitingAck: Int
-  nwaitingConfirm: Int
-
-  user(
-    id: ID!
-  ): OrganisationUser!
+  nusers: Int!
+  nack: Int!
+  nconfirm: Int!
 }
 
 input OrganisationInput {

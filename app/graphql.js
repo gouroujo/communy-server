@@ -15,6 +15,7 @@ const Address = fs.readFileSync(__dirname + '/graphs/address.graphql', { encodin
 const Event = fs.readFileSync(__dirname + '/graphs/event.graphql', { encoding: 'utf8'});
 const Organisation = fs.readFileSync(__dirname + '/graphs/organisation.graphql', { encoding: 'utf8'});
 const User = fs.readFileSync(__dirname + '/graphs/user.graphql', { encoding: 'utf8'});
+const Registration = fs.readFileSync(__dirname + '/graphs/registration.graphql', { encoding: 'utf8'});
 
 const resolvers = require('./resolvers');
 
@@ -28,6 +29,7 @@ module.exports = (app) => {
       Event,
       Organisation,
       User,
+      Registration,
     ],
     resolvers: resolvers,
   });

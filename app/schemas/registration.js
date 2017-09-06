@@ -4,29 +4,37 @@ const { orgStatus } = require('../config');
 
 const RegistrationSchema = new Schema({
   user: {
-    id: {
+    _id: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
     },
-    fullname: String,
+    firstname: String,
+    lastname: String,
+    email: { type: String, required: true },
     avatar: String,
   },
   organisation: {
-    id: {
+    _id: {
       type: Schema.Types.ObjectId,
       ref: 'Organisation',
+      required: true,
     },
-    title:  String,
+    title:  { type: String, required: true },
     logo: String,
   },
-  status: {
+  confirmed: { type: Boolean, default: false, required: true },
+  ack: { type: Boolean, default: false, required: true },
+  role: {
     type: String,
-    enum: values(orgStatus),
-    index: true
+    enum: values(orgStatus).concat([null]),
+    default: null
   },
-  activities: [],
+  // activities: [],
+}, {
+  timestamps: true
 });
 
-RegistrationSchema.index({ 'user.id': 1, 'organisation.id': 1 }, { unique: true });
+RegistrationSchema.index({ 'user._id': 1, 'organisation._id': 1 }, { unique: true });
 
 module.exports = RegistrationSchema;

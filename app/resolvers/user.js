@@ -11,35 +11,32 @@ module.exports = {
     id(user) {
       return user._id || user.id;
     },
-    norganisations(user) {
-      return user.organisations.length;
+
+    fullname(user) {
+      if (!user.firstname && !user.lastname) return user.email;
+      return `${user.firstname ? user.firstname : ''} ${user.lastname ? user.lastname : ''}`;
     },
+
     organisations(user, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
-        'id', 'title', 'logo', 'waiting_ack', 'waiting_confirm', 'role', 'joinedAt', '__typename'
+        'id', 'title', 'logo', 'role', 'ack','isWaitingAck', 'isWaitingConfirm', '__typename'
       ])
+
       if (fields.length === 0) {
-        return user.organisations.map(o => ({
-          id: o.ref,
-          title: o.title,
-          logo: o.logo,
-          ack: o.ack,
-          role: o.role,
-          t: o.t,
-        }))
-      } else {
-        return models.Organisation.find({
-          _id: { $in: user.organisations.map(org => org.ref ) }
-        }).then(organisations => (
-          organisations.map(organisation => {
-            const uo = user.organisations.find(o => {
-              return o.ref == organisation._id
-            });
-            return uo ? Object.assign({}, organisation, { ack: uo.ack, role: uo.role, t: uo.t }) : organisation;
-          })
-        ))
+        return user.organisations;
       }
+      return models.Organisation.find({
+        _id: { $in: user.organisations.map(org => org._id) }
+      }).then(organisations => {
+        const test = organisations.map((organisation) => {
+          const a = Object.assign({}, user.organisations.id(organisation._id), organisation.toObject())
+          console.log(a)
+          return a;
+        })
+        return test;
+      })
     },
+
     events(user, { before, after, limit, offset, organisationId, answer }, { currentUser }, info) {
       if (!user) return [];
       const query = models.Event.find({});
@@ -79,10 +76,10 @@ module.exports = {
       return query.sort('endTime').limit(limit).skip(offset).lean().exec();
     },
     isWaitingAck(user) {
-      return user.wt_ack || false;
+      return user.ack;
     },
     isWaitingConfirm(user) {
-      return user.wt_confirm || false;
+      return !user.role;
     },
   },
 
@@ -159,17 +156,96 @@ module.exports = {
     },
 
     joinOrganisation(parent, { organisationId }, { currentUser }) {
+      const userOrg = currentUser.organisations.id(organisationId)
+
+      // User has already join the organisation and acknowledged
+      if (userOrg && userOrg.ack) return currentUser;
+
+      // User has not acknowledged
+      if (userOrg && !userOrg.ack) {
+        return Promise.all([
+          models.User.findOneAndUpdate(
+            {
+              "_id": currentUser._id,
+              "organisations": {
+                $elemMatch: {
+                  _id: organisationId
+                }
+              }
+            }, {
+              "$set": {
+                "organisations.$.ack": true,
+              },
+            }, { new: true }
+          ),
+          models.Registration.updateOne(
+            {
+              "user._id": currentUser._id,
+              "organisation._id": organisationId,
+            },
+            {
+              ack: true
+            }
+          ),
+          models.Organisation.updateOne(
+            {
+              "_id": organisationId,
+            },
+            {
+              "$inc": {
+                nusers: 1,
+                nwt_ack: -1,
+              }
+            }
+          )
+        ])
+        .then(([ user ]) => user)
+        .catch(e => console.log(e));
+      }
+
+      // User has not yet join the organisation
       return models.Organisation.findById(organisationId)
         .then(organisation => {
-          if (!organisation) return new Error('Not Found');
-          return candidateToOrganisation(currentUser, organisationId)
-            .then(() => {
-              // currentUser.organisations.push(organisation)
-              return models.User.findById(currentUser.id)
-            })
+          if (!organisation) return new Error('Organisation Not Found');
+          if (organisation.private) return new Error('Forbidden');
+          return Promise.all([
+            models.User.findOneAndUpdate(
+              {
+                "_id": currentUser._id,
+              },
+              {
+                $push: { organisations: Object.assign({}, organisation.toObject(), { ack: true }) },
+              },
+              { new: true }
+            ),
+            models.Registration.updateOne(
+              {
+                "user._id": currentUser._id,
+                "organisation._id": organisationId,
+              },
+              {
+                "$set": {
+                  "organisation": organisation,
+                  "user": currentUser,
+                  "ack": true
+                }
+              },
+              { upsert: true }
+            ),
+            models.Organisation.updateOne(
+              {
+                "_id": organisationId,
+              },
+              {
+                "$inc": {
+                  nwt_confirm: 1,
+                }
+              }
+            )
+          ])
         })
-
+        .then(([ user ]) => user)
+        .catch(e => console.log(e));
     },
-
   }
 }

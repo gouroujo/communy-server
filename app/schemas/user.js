@@ -10,35 +10,17 @@ const { values } = require('lodash')
 const { orgPermissions, orgStatus, SECRET, SECRET_PUBLIC } = require('../config');
 
 const SubOrganisationSchema = new Schema({
-  title: String, // org title
-  logo: String, // org logoUrl
+  title: { type: String, required: true },
+  logo: String,
   role: {
     type: String,
-    enum: values(orgStatus),
-    index: true
-  }, // status
-  ack: Boolean,
-  ref: { type: Schema.Types.ObjectId }, // organisation id
-  t: Date,
+    enum: values(orgStatus).concat([null]),
+    default: null,
+  },
+  ack: { type: Boolean, default: false },
+  confirm: { type: Boolean, default: false },
+  _id: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
 });
-
-SubOrganisationSchema.pre('save', function(next) {
-    if (this.isInit()) this.t = new Date();
-    return next();
-});
-
-// const SubEventSchema = new Schema({
-//   title: String,
-//   startTime: Date,
-//   endTime: {
-//     type: Date,
-//     expires: 0
-//   },
-//   status: { type: String, index: true }, // status
-//   org: Schema.Types.ObjectId,
-//   _id: { type: Schema.Types.ObjectId, unique: true} // event id
-// });
-// SubEventSchema.index({ endTime: 1}, { expireAfterSeconds: 0 }) // Expire after 12h
 
 const UserSchema = new Schema({
   firstname:  String,
@@ -67,7 +49,10 @@ const UserSchema = new Schema({
     index: true,
     sparse: true,
   },
-  organisations: [SubOrganisationSchema],
+  organisations: {
+    type: [SubOrganisationSchema],
+    default: [],
+  },
   norganisations: { type: Number, default: 0 },
 }, {
   timestamps: true
@@ -100,8 +85,8 @@ UserSchema.virtual('permissions')
 
     if (this.organisations) {
       permissions.add(this.organisations.reduce((p, o) => {
-        if (!o.role || !o.ref) return p;
-        return p.concat(orgPermissions[o.role].map(a => `organisation:${o.ref}:${a}`));
+        if (!o.role || !o._id) return p;
+        return p.concat(orgPermissions[o.role].map(a => `organisation:${o._id}:${a}`));
       }, []));
     }
 

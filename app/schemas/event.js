@@ -16,7 +16,13 @@ const EventSchema = new Schema({
   endTime: { type: Date, index: true },
   allDay: Boolean,
   organisation: {
-    ref: Schema.Types.ObjectId,
+    _id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organisation',
+      required: true,
+      index: true,
+      unique: true
+    },
     title: String,
     logo: String,
   },
