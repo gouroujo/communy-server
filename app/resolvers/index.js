@@ -54,7 +54,6 @@ const index = {
   }),
   Query: {
     version: () => '0.0.1',
-    isAuthenticated: (parent, args, { currentUser }) => !!currentUser,
   },
   Mutation: {
     version: () => '0.0.1',

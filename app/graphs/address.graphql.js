@@ -1,3 +1,4 @@
+const Address = /* GraphQL */`
 type Address {
   title: String
   street: String
@@ -8,3 +9,6 @@ type Address {
   lng: Float
   fulltext: String
 }
+`
+
+module.exports = () => [Address]

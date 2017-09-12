@@ -25,6 +25,7 @@ module.exports = {
       if (fields.length === 0) {
         return user.organisations;
       }
+
       return models.Organisation.find({
         _id: { $in: user.organisations.map(org => org._id) }
       }).then(organisations => {
@@ -37,19 +38,19 @@ module.exports = {
       })
     },
 
-    events(user, { before, after, limit, offset, organisationId, answer }, { currentUser }, info) {
+    events(user, { before, after, limit, offset, organisationId, answer = 'yes' }, { currentUser }, info) {
       if (!user) return [];
       const query = models.Event.find({});
       query.select('-yes -no -mb');
 
-      if (answer) query.where(answer).elemMatch({ ref: user._id || user.id });
+      if (answer) query.where(answer).elemMatch({ _id : user._id || user.id });
       if (after) query.gte('endTime', after);
       if (before) query.lte('startTime', before);
       if (organisationId) {
-        query.where('organisation.ref').equals(organisationId);
+        query.where('organisation._id').equals(organisationId);
       } else {
-        query.in('organisation.ref',
-          currentUser.organisations.map(o => o.ref)
+        query.in('organisation._id',
+          currentUser.organisations.map(o => o._id)
         );
       }
       return query.sort('endTime').limit(limit).skip(offset).lean().exec();
@@ -153,99 +154,6 @@ module.exports = {
         input,
         { new: true }
       )
-    },
-
-    joinOrganisation(parent, { organisationId }, { currentUser }) {
-      const userOrg = currentUser.organisations.id(organisationId)
-
-      // User has already join the organisation and acknowledged
-      if (userOrg && userOrg.ack) return currentUser;
-
-      // User has not acknowledged
-      if (userOrg && !userOrg.ack) {
-        return Promise.all([
-          models.User.findOneAndUpdate(
-            {
-              "_id": currentUser._id,
-              "organisations": {
-                $elemMatch: {
-                  _id: organisationId
-                }
-              }
-            }, {
-              "$set": {
-                "organisations.$.ack": true,
-              },
-            }, { new: true }
-          ),
-          models.Registration.updateOne(
-            {
-              "user._id": currentUser._id,
-              "organisation._id": organisationId,
-            },
-            {
-              ack: true
-            }
-          ),
-          models.Organisation.updateOne(
-            {
-              "_id": organisationId,
-            },
-            {
-              "$inc": {
-                nusers: 1,
-                nwt_ack: -1,
-              }
-            }
-          )
-        ])
-        .then(([ user ]) => user)
-        .catch(e => console.log(e));
-      }
-
-      // User has not yet join the organisation
-      return models.Organisation.findById(organisationId)
-        .then(organisation => {
-          if (!organisation) return new Error('Organisation Not Found');
-          if (organisation.private) return new Error('Forbidden');
-          return Promise.all([
-            models.User.findOneAndUpdate(
-              {
-                "_id": currentUser._id,
-              },
-              {
-                $push: { organisations: Object.assign({}, organisation.toObject(), { ack: true }) },
-              },
-              { new: true }
-            ),
-            models.Registration.updateOne(
-              {
-                "user._id": currentUser._id,
-                "organisation._id": organisationId,
-              },
-              {
-                "$set": {
-                  "organisation": organisation,
-                  "user": currentUser,
-                  "ack": true
-                }
-              },
-              { upsert: true }
-            ),
-            models.Organisation.updateOne(
-              {
-                "_id": organisationId,
-              },
-              {
-                "$inc": {
-                  nwt_confirm: 1,
-                }
-              }
-            )
-          ])
-        })
-        .then(([ user ]) => user)
-        .catch(e => console.log(e));
     },
   }
 }

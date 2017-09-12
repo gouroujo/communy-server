@@ -6,7 +6,11 @@ const SubUserSchema = new Schema({
   lastname: String,
   email: String,
   avatar: String,
-  ref: { type: Schema.Types.ObjectId, index: true, sparse: true} // user id
+  _id: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    index: true,
+  } // user id
 });
 
 const EventSchema = new Schema({
@@ -21,7 +25,6 @@ const EventSchema = new Schema({
       ref: 'Organisation',
       required: true,
       index: true,
-      unique: true
     },
     title: String,
     logo: String,

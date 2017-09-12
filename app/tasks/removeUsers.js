@@ -64,21 +64,21 @@ module.exports = function (userIds, organisationId) {
     return Promise.all([
       models.Registration.where({
         "organisation._id": organisationId,
+        "ack": true,
+        "confirm": true,
+      }).count(),
+      models.Registration.where({
+        "organisation._id": organisationId,
         "ack": false,
-        "confirmed": true,
+        "confirm": true,
       }).count(),
       models.Registration.where({
         "organisation._id": organisationId,
         "ack": true,
-        "confirmed": false,
-      }).count(),
-      models.Registration.where({
-        "organisation._id": organisationId,
-        "ack": true,
-        "confirmed": true,
+        "confirm": false,
       }).count()
     ])
-  }).then(([ nusers, nwt_confirm, nwt_ack ]) => {
+  }).then(([ nusers, nwt_ack, nwt_confirm ]) => {
     return models.Organisation.findByIdAndUpdate(organisationId, {
       nusers,
       nwt_confirm,

@@ -2,14 +2,21 @@
   "name": "Orgaa-server",
   "version": "0.0.1",
   "description": "Orgaa API",
-  "main": "src/index.js",
+  "main": "app/index.js",
   "author": "Jonathan Pollak",
   "license": "MIT",
   "scripts": {
-    "start": "nodemon app/index.js -e js,graphql --watch",
-    "worker": "nodemon app/worker.js -e js --watch"
+    "start": "nodemon app/server.js -e js,graphql --watch",
+    "worker": "nodemon app/worker.js -e js --watch",
+    "f-start": "functions-emulator start",
+    "f-graphql": "functions-emulator deploy graphql --trigger-http",
+    "f-oauth": "functions-emulator deploy oauth --trigger-http",
+
+    "f-logs": "functions-emulator logs read",
+    "f-stop": "functions-emulator stop"
   },
   "dependencies": {
+    "@google-cloud/pubsub": "^0.14.0",
     "axios": "^0.16.2",
     "body-parser": "^1.17.2",
     "compression": "^1.7.0",
@@ -38,6 +45,7 @@
     "shiro-trie": "^0.3.13"
   },
   "devDependencies": {
+    "@google-cloud/functions-emulator": "^1.0.0-alpha.25",
     "eslint": "^4.5.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-import": "^2.7.0",

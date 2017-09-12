@@ -13,16 +13,16 @@ module.exports = {
     ])
     .then(([ user, event ]) => {
       return models.Event.update({
-        _id: event.ref,
+        _id: event._id,
         yes: {
           "$not": {
-            "$elemMatch": { ref: user.ref }
+            "$elemMatch": { _id: user._id }
           }
         },
       }, {
         "$push": { yes: user },
-        "$pull": { no: { ref: user.ref } },
-        "$pull": { mb: { ref: user.ref } },
+        "$pull": { no: { _id: user._id } },
+        "$pull": { mb: { _id: user._id } },
         "$inc": { nusers: 1 },
       });
     })
@@ -43,13 +43,13 @@ module.exports = {
         {
           updateOne: {
             filter: {
-              _id: event.ref,
+              _id: event._id,
               yes: {
-                "$elemMatch": { ref: user.ref }
+                "$elemMatch": { _id: user._id }
               }
             },
             update: {
-              "$pull": { yes: { ref: user.ref } },
+              "$pull": { yes: { _id: user._id } },
               "$push": { mb: user },
               "$inc": { nusers: -1 },
             }
@@ -58,44 +58,44 @@ module.exports = {
         {
           updateOne: {
             filter: {
-              _id: event.ref,
+              _id: event._id,
               yes: {
                 "$not": {
-                  "$elemMatch": { ref: user.ref }
+                  "$elemMatch": { _id: user._id }
                 }
               },
               mb: {
                 "$not": {
-                  "$elemMatch": { ref: user.ref }
+                  "$elemMatch": { _id: user._id }
                 }
               },
               // no: {
-              //   "$elemMatch": { ref: user.ref }
+              //   "$elemMatch": { _id: user._id }
               // }
             },
             update: {
               "$push": { mb: user },
-              "$pull": { no: { ref: user.ref } },
+              "$pull": { no: { _id: user._id } },
             },
           }
         },
         // {
         //   updateOne: {
         //     filter: {
-        //       _id: event.ref,
+        //       _id: event._id,
         //       yes: {
         //         "$not": {
-        //           "$elemMatch": { ref: user.ref }
+        //           "$elemMatch": { _id: user._id }
         //         }
         //       },
         //       mb: {
         //         "$not": {
-        //           "$elemMatch": { ref: user.ref }
+        //           "$elemMatch": { _id: user._id }
         //         }
         //       },
         //       no: {
         //         "$not": {
-        //           "$elemMatch": { ref: user.ref }
+        //           "$elemMatch": { _id: user._id }
         //         }
         //       },
         //     },
@@ -123,13 +123,13 @@ module.exports = {
         {
           updateOne: {
             filter: {
-              _id: event.ref,
+              _id: event._id,
               yes: {
-                "$elemMatch": { ref: user.ref }
+                "$elemMatch": { _id: user._id }
               }
             },
             update: {
-              "$pull": { yes: { ref: user.ref } },
+              "$pull": { yes: { _id: user._id } },
               "$push": { no: user },
               "$inc": { nusers: -1 },
             }
@@ -138,21 +138,21 @@ module.exports = {
         {
           updateOne: {
             filter: {
-              _id: event.ref,
+              _id: event._id,
               yes: {
                 "$not": {
-                  "$elemMatch": { ref: user.ref }
+                  "$elemMatch": { _id: user._id }
                 }
               },
               no: {
                 "$not": {
-                  "$elemMatch": { ref: user.ref }
+                  "$elemMatch": { _id: user._id }
                 }
               }
             },
             update: {
               "$push": { no: user },
-              "$pull": { mb: { ref: user.ref } },
+              "$pull": { mb: { _id: user._id } },
             },
           }
         }

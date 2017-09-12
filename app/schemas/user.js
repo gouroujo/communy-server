@@ -1,10 +1,16 @@
-const { promisify } = require('util');
 const shiroTrie = require('shiro-trie');
 const { Schema } = require('mongoose');
 const { pbkdf2, randomBytes, timingSafeEqual } = require('crypto');
 const { sign, verify } = require('jsonwebtoken');
 
-const signAsync = promisify(sign);
+const signAsync = (data, secret, options) => {
+  return new Promise((resolve, reject) => {
+    sign(data, secret, options, (err, res) => {
+      if (err) return reject(err);
+      return resolve(res);
+    })
+  })
+}
 
 const { values } = require('lodash')
 const { orgPermissions, orgStatus, SECRET, SECRET_PUBLIC } = require('../config');
@@ -37,7 +43,7 @@ const UserSchema = new Schema({
     type: String,
     index: true,
   },
-  confirmed: Boolean,
+  confirm: Boolean,
   userCreated: { type: Boolean, default: false },
   avatar:   String,
   birthday: Date,
@@ -145,17 +151,43 @@ UserSchema.methods.getPublicToken = function(options) {
   return signAsync(this._id, SECRET_PUBLIC, options)
 };
 
-UserSchema.statics.findByToken = function(token) {
-  return new Promise((resolve, reject) => {
-    if (!token) return reject(null);
-    try {
-      return resolve(verify(token, SECRET, { algorithms: ['HS512'] }));
-    } catch (e) {
-      return reject(e)
-    }
-  }).then(payload => {
-    return this.findById(payload.id)
+// UserSchema.query.byToken = function(token) {
+//   return new Promise((resolve, reject) => {
+//     if (!token) return reject(null);
+//     try {
+//       return resolve(verify(token, SECRET, { algorithms: ['HS512'] }));
+//     } catch (e) {
+//       return reject(e)
+//     }
+//   })
+//   .then(payload => {
+//     console.log(payload)
+//     return this.findById(payload.id, cb)
+//   })
+//   // return this.find({ name: new RegExp(name, 'i') });
+// };
+
+UserSchema.statics.findByToken = function(token, cb) {
+  if (!token) return cb(null);
+  return verify(token, SECRET, { algorithms: ['HS512'] }, (err, payload) => {
+    if(err) return cb(err);
+    return this.findById(payload.id, cb)
   })
+  //
+  //
+  // return new Promise((resolve, reject) => {
+  //   if (!token) return reject(null);
+  //   try {
+  //     return resolve(verify(token, SECRET, { algorithms: ['HS512'] }));
+  //   } catch (e) {
+  //     return reject(e)
+  //   }
+  // })
+  // .then(payload => {
+  //   console.log(payload)
+  //   return this.findById(payload.id, cb)
+  // })
+  // .catch(cb)
 }
 
 UserSchema.statics.findByPublicToken = function(token) {
@@ -180,7 +212,7 @@ UserSchema.statics.confirmByPublicToken = function(token) {
     }
   }).then(userId => {
     return this.findByIdAndUpdate(userId, {
-      $set: { confirmed: 'true' }
+      $set: { confirm: 'true' }
     }, { new: false })
   })
 }

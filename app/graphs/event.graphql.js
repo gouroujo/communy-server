@@ -1,13 +1,9 @@
+const Event = /* GraphQL */`
 extend type Query {
-
-  # get a list of all events you have access to
   events (
-    # filter to a specific organisation
     organisationId: ID
-    # limit the number of events
+    answer: EventAnswer
     limit: Int
-    # filter events by your answer
-    answer: String
     offset: Int
     after: DateTime
     before: DateTime
@@ -48,17 +44,19 @@ type Event {
   endTime: DateTime!
   allDay: Boolean
   organisation: Organisation!
-  nusers: Int!
   nanswer: Int
+  nusers: Int!
   nno: Int
   nmb: Int
-  
+
   users(
     limit: Int
+    offset: Int
     yes: Boolean
     no: Boolean
     mb: Boolean
-  ): [EventUser!]
+  ): [User!]
+
   address: Address
   answer: EventAnswer
 }
@@ -75,3 +73,6 @@ input addUserToEventInput {
   userId: ID
   answer: EventAnswer!
 }
+`;
+
+module.exports = () => [Event]

@@ -42,7 +42,7 @@ module.exports = function (users, organisation) {
         },
         update: {
           $set : {
-            confirmed: true,
+            confirm: true,
             role: orgStatus.MEMBER,
             updatedAt: date,
           },

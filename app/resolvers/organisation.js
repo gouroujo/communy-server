@@ -43,7 +43,6 @@ module.exports = {
     },
 
     confirm(organisation, args, { currentUser }) {
-      console.log(organisation)
       if (typeof organisation.confirm !== 'undefined') return organisation.confirm
       return models.Registration.findOne({
         "user._id": currentUser._id,
@@ -72,30 +71,16 @@ module.exports = {
       })
     },
 
-    registrations(organisation, { role, limit, offset, ack, conf }, { currentUser }, info) {
+    registrations(organisation, { role, limit, offset, ack = true, confirm = true }, { currentUser }, info) {
       if (!currentUser) return new Error('Unauthorized');
 
       const query = models.Registration.find({
         "organisation._id": organisation._id,
-      })
+        "ack": ack,
+        "confirm": confirm
+      });
       if (typeof role !== 'undefined') query.where('role').equals(role)
-      if (typeof ack !== 'undefined') query.where('ack').equals(ack)
-      if (typeof conf !== 'undefined') query.where('ack').equals(conf)
       return query.limit(limit).skip(offset).lean().exec();
-    },
-
-    user(organisation, { id }, { currentUser }) {
-      if (!currentUser) return new Error('Unauthorized');
-
-      const query = models.User.findOne({
-        _id: id,
-        organisations: {
-          $elemMatch: {
-            _id: organisation._id,
-            ack: true,
-          }
-        }
-      })
     },
 
     nevents(organisation) {
@@ -107,7 +92,7 @@ module.exports = {
       if (!currentUser.permissions.check(`organisation:${organisation._id}:event_list`)) return new Error('Forbidden');
 
       const query = models.Event.find({
-        "organisation.ref": organisation._id
+        "organisation._id": organisation._id
       })
 
       if (after) query.gte('endTime', after)
@@ -170,7 +155,7 @@ module.exports = {
             user: currentUser.toObject(),
             organisation: organisation.toObject(),
             ack: true,
-            confirmed: true,
+            confirm: true,
             role: orgStatus.ADMIN,
           })
         ]).then(([ organisation ]) => organisation);
@@ -264,6 +249,97 @@ module.exports = {
       .catch(e => console.log(e))
     },
 
+    joinOrganisation(parent, { id }, { currentUser }) {
+      const userOrg = currentUser.organisations.id(id)
+
+      // User has already join the organisation and acknowledged
+      if (userOrg && userOrg.ack) return currentUser;
+
+      // User has not acknowledged
+      if (userOrg && !userOrg.ack) {
+        return Promise.all([
+          models.Organisation.findByIdAndUpdate(id,
+            {
+              "$inc": {
+                nusers: 1,
+                nwt_ack: -1,
+              }
+            }, { new: true }
+          ),
+          models.User.updateOne(
+            {
+              "_id": currentUser._id,
+              "organisations._id": id
+            },
+            {
+              "$set": {
+                "organisations.$.ack": true,
+              },
+            }
+          ),
+          models.Registration.updateOne(
+            {
+              "user._id": currentUser._id,
+              "organisation._id": id,
+            },
+            {
+              ack: true
+            }
+          )
+        ])
+        .then(([ organisation ]) => organisation)
+        .catch(e => console.log(e));
+      }
+
+      // User has not yet join the organisation
+      return models.Organisation.findById(id)
+        .then(organisation => {
+          if (!organisation) return new Error('Organisation Not Found');
+          if (organisation.private) return new Error('Forbidden');
+
+          return Promise.all([
+            Promise.resolve(organisation),
+            models.Organisation.updateOne(
+              {
+                _id: id,
+              },
+              {
+                "$inc": {
+                  nwt_confirm: 1,
+                }
+              }
+            ),
+            models.User.updateOne(
+              {
+                _id: currentUser._id,
+              },
+              {
+                $push: {
+                  organisations: Object.assign({}, organisation.toObject(), { ack: true, confirm: false })
+                },
+              }
+            ),
+            models.Registration.updateOne(
+              {
+                "user._id": currentUser._id,
+                "organisation._id": id,
+              },
+              {
+                "$set": {
+                  "organisation": organisation,
+                  "user": currentUser,
+                  "ack": true,
+                  "confirm": false,
+                }
+              },
+              { upsert: true }
+            )
+          ])
+        })
+        .then(([organisation]) => organisation)
+        .catch(e => console.log(e));
+    },
+
     addUserToOrganisation(parent, { id, input }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
@@ -276,7 +352,7 @@ module.exports = {
           return models.User.findById(input.userId)
           .then(user => {
             if (!user) return new Error('User Not Found');
-            inviteUsers([ user ], organisation)
+            return inviteUsers([ user ], organisation)
           })
           .catch(e => console.log(e));
         }
@@ -284,7 +360,7 @@ module.exports = {
         if (input.email) {
           return models.User.findOneAndCreate({ email: input.email }, { email: input.email }, { new: true, upsert: true })
           .then(user => {
-            inviteUsers([ user ], organisation)
+            return inviteUsers([ user ], organisation)
           })
           .catch(e => console.log(e));
         }
@@ -315,6 +391,10 @@ module.exports = {
       if (!currentUser.permissions.check(`organisation:${id}:removeUser`)) return new Error('Forbidden');
 
       return removeUsers([input.userId], id)
+      .then(organisation => {
+        console.log(organisation)
+        return organisation
+      })
         .catch(e => console.log(e));
     },
 
@@ -343,7 +423,7 @@ module.exports = {
         )
       ])
       .then(() => {
-        models.Organisation.findById(id);
+        return models.Organisation.findById(id);
       })
       .catch(e => {
         console.log(e);

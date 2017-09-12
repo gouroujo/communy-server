@@ -6,13 +6,13 @@ module.exports = {
       return registration._id;
     },
     joined(registration) {
-      return registration.ack && registration.confirmed;
+      return registration.ack && registration.confirm;
     },
-    isWaitingAck(registration) {
-      return !registration.ack
+    ack(registration) {
+      return registration.ack
     },
-    isWaitingConfirm(registration) {
-      return !registration.confirmed
+    confirm(registration) {
+      return registration.confirm
     },
   }
 }

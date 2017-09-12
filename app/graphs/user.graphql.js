@@ -1,3 +1,4 @@
+const User = /* GraphQL */`
 extend type Query {
   user (
     id: ID!
@@ -24,10 +25,6 @@ extend type Mutation {
     id: ID!
     input: UserInput!
   ): User!
-
-  joinOrganisation (
-    organisationId: ID!
-  ) : User!
 }
 
 type User {
@@ -97,7 +94,6 @@ type OrganisationUser {
 
 type EventUser {
   id: ID!
-  ref: ID!
   firstname: String
   lastname: String
   fullname: String
@@ -117,3 +113,6 @@ input UserInput {
   phone1: String
   phone2: String
 }
+`;
+
+module.exports = () => [User]

@@ -8,7 +8,7 @@ module.exports = {
 
   Event: {
     id(event) {
-      return event.ref || event._id || event.id;
+      return event._id || event._id || event.id;
     },
 
     nusers(event) {
@@ -29,9 +29,9 @@ module.exports = {
       if (event.answer) return event.answer;
       if (!currentUser) return null;
 
-      if (event.yes && event.yes.find(u => String(u.ref) === String(userId || currentUser.id))) return 'yes';
-      if (event.mb && event.mb.find(u => String(u.ref) === String(userId || currentUser.id))) return 'mb';
-      if (event.no && event.no.find(u => String(u.ref) === String(userId || currentUser.id))) return 'no';
+      if (event.yes && event.yes.find(u => String(u._id) === String(userId || currentUser.id))) return 'yes';
+      if (event.mb && event.mb.find(u => String(u._id) === String(userId || currentUser.id))) return 'mb';
+      if (event.no && event.no.find(u => String(u._id) === String(userId || currentUser.id))) return 'no';
 
       return null;
     },
@@ -58,14 +58,14 @@ module.exports = {
       // ])
       // if (fields.length === 0) {
       //   return event.yes.map(u => ({
-      //     id: u.ref,
+      //     id: u._id,
       //     fullname: u.fn,
       //     avatarUrl: u.av,
       //     answer: 'yes',
       //   }))
       // } else {
       //   return models.User.find({
-      //     _id: { $in: event.yes.map(u => u.ref ) }
+      //     _id: { $in: event.yes.map(u => u._id ) }
       //   })
       // }
     },
@@ -75,12 +75,12 @@ module.exports = {
       ]);
       if (fields.length === 0) {
         return {
-          id: event.organisation.ref,
+          id: event.organisation._id,
           title: event.organisation.title,
           logoUrl: event.organisation.logoUrl,
         }
       } else {
-        return models.Organisation.findById(event.organisation.ref)
+        return models.Organisation.findById(event.organisation._id)
       }
     },
   },
@@ -96,9 +96,9 @@ module.exports = {
       if (before) query.lte('startTime', before)
 
       if (organisationId) {
-        query.where('organisation.ref').equals(organisationId)
+        query.where('organisation._id').equals(organisationId)
       } else {
-        query.in('organisation.ref', currentUser.permissions.permissions('organisation:?:events'))
+        query.in('organisation._id', currentUser.permissions.permissions('organisation:?:events'))
       }
 
       return query.sort('endTime').limit(limit).skip(offset).lean().exec()
@@ -109,8 +109,8 @@ module.exports = {
 
       return models.Event.findById(id).then(event => {
         if (!event) return new Error('Not found');
-        if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-        if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_view`))return new Error('Forbidden');
+        if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
+        if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_view`))return new Error('Forbidden');
 
         return event;
       });
@@ -125,13 +125,13 @@ module.exports = {
 
       return models.Organisation.findById(organisationId, 'title logo').then(organisation => {
         if (!organisation) return new Error('organisation not found');
-        return models.Event.create(Object.assign(input, {
-          organisation: {
-            title: organisation.title,
-            logo: organisation.logo,
-            ref: organisation._id,
-          }
-        }))
+        return Promise.all([
+          models.Event.create(Object.assign(input, { organisation })),
+          organisation.update({ $inc: { nevents: 1 }})
+        ])
+        .then(([ event ]) => {
+          return event
+        })
       });
     },
 
@@ -141,8 +141,8 @@ module.exports = {
       return models.Event.findById(id)
         .then(event => {
           if (!event) return new Error('Not found');
-          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_edit`))return new Error('Forbidden');
+          if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
+          if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_edit`))return new Error('Forbidden');
 
           return Object.assign(event, input).save();
         })
@@ -154,8 +154,8 @@ module.exports = {
       return models.Event.findById(id)
         .then(event => {
           if (!event) return new Error('Not found');
-          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
-          if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_delete`))return new Error('Forbidden');
+          if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
+          if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_delete`))return new Error('Forbidden');
 
           return event.remove();
         });
@@ -166,29 +166,162 @@ module.exports = {
 
       return models.Event.findById(id)
         .then(event => {
+          let userPromise;
           if (!event) return new Error('Not found');
-          if (!event.organisation || !event.organisation.ref) return new Error('Data Corrupted');
+          if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
           if (input.userId && input.userId !== String(currentUser.id)) {
-            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_add_user`))return new Error('Forbidden');
+            if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_add_user`))return new Error('Forbidden');
+            userPromise = models.User.findById(input.userId);
           } else {
-            if (!currentUser.permissions.check(`organisation:${event.organisation.ref}:event_answer`))return new Error('Forbidden');
+            if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_answer`))return new Error('Forbidden');
+            userPromise = Promise.resolve(currentUser);
           }
 
           if (input.answer === 'yes') {
-            return answerYesToEvent(
-              input.userId || currentUser,
-              event
-            ).then(() => models.Event.findById(id))
+            return userPromise
+            .then(user => Promise.all([
+              models.Event.bulkWrite([
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $ne: user._id },
+                      "no._id": { $eq: user._id },
+                    },
+                    update: {
+                      "$pull": { no: { _id: user._id } },
+                      "$push": { yes: user },
+                      "$inc": { nusers: 1 },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $ne: user._id },
+                      "mb._id": { $eq: user._id },
+                    },
+                    update: {
+                      "$pull": { mb: { _id: user._id } },
+                      "$push": { yes: user },
+                      "$inc": { nusers: 1 },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $ne: user._id },
+                      "no._id": { $ne: user._id },
+                      "mb._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$push": { yes: user },
+                      "$inc": { nusers: 1 },
+                    }
+                  },
+                },
+              ])
+            ]))
+            .then(() => {
+              return models.Event.findById(id);
+            })
           } else if (input.answer === 'no') {
-            return answerNoToEvent(
-              input.userId || currentUser,
-              event
-            ).then(() => models.Event.findById(id))
+            return userPromise
+            .then(user => Promise.all([
+              models.Event.bulkWrite([
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $ne: user._id },
+                      "no._id": { $ne: user._id },
+                      "mb._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$push": { no: user },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $eq: user._id },
+                      "no._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$pull": { yes: { _id: user._id } },
+                      "$push": { no: user },
+                      "$inc": { nusers: -1 },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "mb._id": { $eq: user._id },
+                      "no._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$pull": { mb: { _id: user._id } },
+                      "$push": { no: user },
+                    }
+                  },
+                },
+              ])
+            ]))
+            .then(() => models.Event.findById(id))
           } else if (input.answer === 'mb') {
-            return answerMaybeToEvent(
-              input.userId || currentUser,
-              event
-            ).then(() => models.Event.findById(id))
+            return userPromise
+            .then(user => Promise.all([
+              models.Event.bulkWrite([
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $ne: user._id },
+                      "no._id": { $ne: user._id },
+                      "mb._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$push": { mb: user },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "yes._id": { $eq: user._id },
+                      "mb._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$pull": { yes: { _id: user._id } },
+                      "$push": { mb: user },
+                      "$inc": { nusers: -1 },
+                    }
+                  },
+                },
+                {
+                  updateOne: {
+                    filter: {
+                      _id: id,
+                      "no._id": { $eq: user._id },
+                      "mb._id": { $ne: user._id },
+                    },
+                    update: {
+                      "$pull": { no: { _id: user._id } },
+                      "$push": { mb: user },
+                    }
+                  },
+                },
+              ])
+            ]))
+            .then(() => models.Event.findById(id))
           }
 
           return event;

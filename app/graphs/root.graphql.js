@@ -1,3 +1,4 @@
+const Root = /* GraphQL */`
 scalar Date
 scalar DateTime
 scalar Time
@@ -5,10 +6,12 @@ scalar EventAnswer
 scalar OrganisationRole
 
 type Query {
-  isAuthenticated: Boolean!
   version: String
 }
 
 type Mutation {
   version: String
 }
+`;
+
+module.exports = () => [Root]

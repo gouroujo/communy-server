@@ -1,3 +1,4 @@
+const Organisation = /* GraphQL */`
 extend type Query {
 
   organisations (
@@ -29,20 +30,24 @@ extend type Mutation {
     id: ID!,
   ): Organisation
 
+  joinOrganisation (
+    id: ID!
+  ) : Organisation!
+
   addUserToOrganisation(
     id: ID!
     input: AddUserToOrganisationInput!
-  ): Organisation
+  ): Organisation!
 
   removeUserFromOrganisation (
     id: ID!
     input: RemoveUserFromOrganisationInput!
-  ): Organisation
+  ): Organisation!
 
   setRoleInOrganisation(
     id: ID!
     input: SetRoleInOrganisationInput!
-  ): Organisation
+  ): Organisation!
 }
 
 type Organisation {
@@ -62,13 +67,9 @@ type Organisation {
     role: OrganisationRole
     limit: Int
     offset: Int
-    ack: Boolean!
-    confirm: Boolean!
+    ack: Boolean
+    confirm: Boolean
   ): [Registration]
-
-  user (
-    id: ID!
-  ): User!
 
   events (
     before: Date
@@ -113,3 +114,6 @@ input SetRoleInOrganisationInput {
   userId: ID!
   role: OrganisationRole!
 }
+`;
+
+module.exports = () => [Organisation]
