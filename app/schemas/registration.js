@@ -1,6 +1,6 @@
 const { Schema } = require('mongoose');
 const { values } = require('lodash')
-const { orgStatus } = require('../config');
+const { orgStatus } = require('../dict');
 
 const RegistrationSchema = new Schema({
   user: {

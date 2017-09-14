@@ -3,6 +3,11 @@ const { Schema } = require('mongoose');
 const { pbkdf2, randomBytes, timingSafeEqual } = require('crypto');
 const { sign, verify } = require('jsonwebtoken');
 
+const { values } = require('lodash')
+const config = require('../config');
+const { orgPermissions, orgStatus } = require('../dict');
+const sendEmail = require('../tasks/sendEmail');
+
 const signAsync = (data, secret, options) => {
   return new Promise((resolve, reject) => {
     sign(data, secret, options, (err, res) => {
@@ -10,10 +15,23 @@ const signAsync = (data, secret, options) => {
       return resolve(res);
     })
   })
-}
+};
 
-const { values } = require('lodash')
-const { orgPermissions, orgStatus, SECRET, SECRET_PUBLIC } = require('../config');
+const hashPassword = (password, salt) => new Promise((resolve, reject) => {
+  pbkdf2(password, salt, 100000, 512, 'sha512', (err, buf) => {
+    if (err) reject(err);
+    resolve(buf);
+  });
+});
+
+const generateSalt = () => new Promise((resolve, reject) => {
+  randomBytes(128, (err, buf) => {
+    if (err) reject(err);
+    resolve(buf);
+  });
+});
+
+
 
 const SubOrganisationSchema = new Schema({
   title: { type: String, required: true },
@@ -95,23 +113,8 @@ UserSchema.virtual('permissions')
         return p.concat(orgPermissions[o.role].map(a => `organisation:${o._id}:${a}`));
       }, []));
     }
-
     return permissions;
   });
-
-const hashPassword = (password, salt) => new Promise((resolve, reject) => {
-  pbkdf2(password, salt, 100000, 512, 'sha512', (err, buf) => {
-    if (err) reject(err);
-    resolve(buf);
-  });
-});
-
-const generateSalt = () => new Promise((resolve, reject) => {
-  randomBytes(128, (err, buf) => {
-    if (err) reject(err);
-    resolve(buf);
-  });
-});
 
 UserSchema.pre('save', function(next) {
     // only hash the password if it has been modified (or is new)
@@ -122,8 +125,8 @@ UserSchema.pre('save', function(next) {
         this.salt = salt.toString('hex');
         return hashPassword(this.password, salt)
       })
-      .then(buff => {
-        this.password = buff.toString('hex')
+      .then(buffer => {
+        this.password = buffer.toString('hex')
         next();
       })
       .catch(err => {
@@ -132,88 +135,61 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.methods.comparePassword = function(candidatePassword) {
-  if (!this.salt || !this.password) return Promise.reject(false);
-  return hashPassword(candidatePassword, Buffer.from(this.salt, 'hex')).then(buff => {
+  return Promise.resolve()
+  .then(() => {
+    if (!this.salt) {
+      throw new Error(`No salt defined for user ${this._id}`)
+    }
+    if (!this.password) {
+      throw new Error(`No password defined for user ${this._id}`)
+    }
+    return hashPassword(candidatePassword, Buffer.from(this.salt, 'hex'))
+  })
+  .then(buffer => {
     return new Promise((resolve, reject) => {
-      timingSafeEqual(buff, Buffer.from(this.password, 'hex')) ? resolve(true) : reject(false);
+      timingSafeEqual(buffer, Buffer.from(this.password, 'hex')) ? resolve(true) : reject(false);
     })
-  });
+  })
+
 };
 
 UserSchema.methods.getToken = function() {
   return signAsync({
     email: this.email,
     id: this._id,
-  }, SECRET, { algorithm: 'HS512'})
+  }, config.get('SECRET'), { algorithm: 'HS512'})
 };
 
-UserSchema.methods.getPublicToken = function(options) {
-  return signAsync(this._id, SECRET_PUBLIC, options)
+UserSchema.methods.getPublicToken = function(payload, options) {
+  return signAsync(
+    payload,
+    config.get('SECRET_PUBLIC'),
+    Object.assign({ algorithm: 'HS512' }, options))
 };
 
-// UserSchema.query.byToken = function(token) {
-//   return new Promise((resolve, reject) => {
-//     if (!token) return reject(null);
-//     try {
-//       return resolve(verify(token, SECRET, { algorithms: ['HS512'] }));
-//     } catch (e) {
-//       return reject(e)
-//     }
-//   })
-//   .then(payload => {
-//     console.log(payload)
-//     return this.findById(payload.id, cb)
-//   })
-//   // return this.find({ name: new RegExp(name, 'i') });
-// };
+UserSchema.methods.sendConfirmation = function() {
+  return Promise.resolve()
+    .then(() => {
+      return sendEmail(this._id, 'confirm', null, null)
+    })
+    .catch(e => {
+      console.log(e)
+    })
+}
 
 UserSchema.statics.findByToken = function(token, cb) {
   if (!token) return cb(null);
-  return verify(token, SECRET, { algorithms: ['HS512'] }, (err, payload) => {
+  return verify(token, config.get('SECRET'), { algorithms: ['HS512'] }, (err, payload) => {
     if(err) return cb(err);
     return this.findById(payload.id, cb)
   })
-  //
-  //
-  // return new Promise((resolve, reject) => {
-  //   if (!token) return reject(null);
-  //   try {
-  //     return resolve(verify(token, SECRET, { algorithms: ['HS512'] }));
-  //   } catch (e) {
-  //     return reject(e)
-  //   }
-  // })
-  // .then(payload => {
-  //   console.log(payload)
-  //   return this.findById(payload.id, cb)
-  // })
-  // .catch(cb)
 }
 
-UserSchema.statics.findByPublicToken = function(token) {
-  return new Promise((resolve, reject) => {
-    if (!token) return reject(null);
-    try {
-      return resolve(verify(token, SECRET_PUBLIC));
-    } catch (e) {
-      return reject(e)
-    }
-  }).then(userId => {
-    return this.findById(userId)
-  })
-}
-UserSchema.statics.confirmByPublicToken = function(token) {
-  return new Promise((resolve, reject) => {
-    if (!token) return reject(null);
-    try {
-      return resolve(verify(token, SECRET_PUBLIC));
-    } catch (e) {
-      return reject(e)
-    }
-  }).then(userId => {
-    return this.findByIdAndUpdate(userId, {
-      $set: { confirm: 'true' }
-    }, { new: false })
+UserSchema.statics.findByPublicToken = function(token, cb) {
+  if (!token) return cb(null);
+  return verify(token, config.get('SECRET_PUBLIC'), { algorithms: ['HS512'] }, (err, payload) => {
+    if(err) return cb(err);
+    return this.findById(payload.id, cb)
   })
 }
 

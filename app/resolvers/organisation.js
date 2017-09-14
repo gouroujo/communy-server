@@ -6,7 +6,8 @@ const signCloudinary = require('../utils/signCloudinary');
 const inviteUsers = require('../tasks/inviteUsers');
 const removeUsers = require('../tasks/removeUsers');
 
-const { orgMemberStatus, orgStatus, CLOUDINARY_KEY } = require('../config');
+const config = require('../config');
+const { orgMemberStatus, orgStatus } = require('../dict');
 
 module.exports = {
   Organisation: {
@@ -104,7 +105,7 @@ module.exports = {
       if(!organisation || !organisation._id) return null;
 
       const options = {
-        api_key: CLOUDINARY_KEY,
+        api_key: config.get('CLOUDINARY_KEY'),
         timestamp: Date.now(),
         public_id: `organisations/${organisation._id}/cover`,
         overwrite: true,

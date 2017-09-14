@@ -1,5 +1,5 @@
 const { models } = require('../db');
-const { orgStatus } = require('../config');
+const { orgStatus } = require('../dict');
 
 const minifyUser = require('../utils/minifyUser');
 const minifyOrganisation = require('../utils/minifyOrganisation');

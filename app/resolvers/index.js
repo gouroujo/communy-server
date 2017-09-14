@@ -5,7 +5,7 @@ const { Kind } =  require('graphql/language');
 
 const { GraphQLDate, GraphQLTime, GraphQLDateTime} = require('graphql-iso-date');
 
-const { orgStatus, eventStatus } = require('../config');
+const { orgStatus, eventStatus } = require('../dict');
 
 const event = require('./event');
 const organisation = require('./organisation');

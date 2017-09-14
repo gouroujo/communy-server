@@ -1,4 +1,4 @@
-const { jobs } = require('./config');
+const { jobs } = require('./dict');
 const queue = require('./queue');
 
 process.once('SIGTERM', function ( sig ) {

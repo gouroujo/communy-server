@@ -3,7 +3,7 @@ var faker = require('faker');
 var moment = require('moment');
 
 const { models, mongoose } = require('./db');
-const { eventStatus, orgStatus } = require('./config');
+const { eventStatus, orgStatus } = require('./dict');
 
 faker.locale = "fr";
 

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const config = require('./config');
 
-mongoose.connect(config.MONGO_URI, { useMongoClient: true }, (err) => {
+mongoose.connect(config.get('MONGO_URI'), { useMongoClient: true }, (err) => {
   if (err) throw err;
   console.log('Successfully connected to MongoDB');
 });

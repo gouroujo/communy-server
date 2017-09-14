@@ -1,5 +1,5 @@
 const { models } = require('../db');
-const { orgStatus } = require('../config');
+const { orgStatus } = require('../dict');
 
 module.exports = function (users, organisation) {
   const date = new Date();

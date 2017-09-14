@@ -36,7 +36,10 @@ module.exports =function (req, res) {
       confirm: false,
       userCreated: true,
     })
-    .then(user => user.getToken())
+    .then(user => {
+      return user.sendConfirmation()
+      .then(() => user.getToken())
+    })
     .then(token => {
       return res.append('Authorization', token).sendStatus(201);
     });
