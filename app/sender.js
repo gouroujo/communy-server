@@ -11,13 +11,13 @@ const getEmail = require('./email');
  * Background Cloud Function to be triggered by Pub/Sub.
  *
  * @param {object} event The Cloud Functions event.
- * @param {function} callback The callback function.
+ * @param {function} callback The callback function is omited when returning promise.
  */
 
-module.exports = function (event, callback) {
-  console.log("RECEIVE DATA FROM PUBSUB")
+module.exports = function (event) {
   const pubsubMessage = event.data;
   const jsonStr = Buffer.from(pubsubMessage.data, 'base64').toString();
+  console.log(jsonStr)
   const payload = JSON.parse(jsonStr);
 
   return Promise.resolve()
@@ -55,7 +55,7 @@ module.exports = function (event, callback) {
       })
     })
     .then(body => {
-      console.log(body)
-      callback(body)
+      console.log('Email sent !')
+      return body
     })
 };
