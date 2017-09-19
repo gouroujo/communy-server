@@ -6,7 +6,7 @@ const { sign, verify } = require('jsonwebtoken');
 const { values } = require('lodash')
 const config = require('../config');
 const { orgPermissions, orgStatus } = require('../dict');
-const sendEmail = require('../tasks/sendEmail');
+const pubsub = require('../utils/pubsub');
 
 const signAsync = (data, secret, options) => {
   return new Promise((resolve, reject) => {
@@ -97,7 +97,10 @@ UserSchema.index(
   });
 
 UserSchema.virtual('fullname')
-  .get(function() { return this.firstname + ' ' + this.lastname; })
+  .get(function() {
+    if (!this.firstname && !this.lastname) return this.email;
+    return `${this.firstname ? this.firstname : ''} ${this.lastname ? this.lastname : ''}`;
+  })
   .set(function(v) {
     this.firstname = v.substr(0, v.indexOf(' '));
     this.lastname = v.substr(v.indexOf(' ') + 1);
@@ -155,41 +158,59 @@ UserSchema.methods.comparePassword = function(candidatePassword) {
 
 UserSchema.methods.getToken = function() {
   return signAsync({
-    email: this.email,
     id: this._id,
-  }, config.get('SECRET'), { algorithm: 'HS512'})
-};
-
-UserSchema.methods.getPublicToken = function(payload, options) {
-  return signAsync(
-    payload,
-    config.get('SECRET_PUBLIC'),
-    Object.assign({ algorithm: 'HS512' }, options))
+  }, config.get('SECRET'))
 };
 
 UserSchema.methods.sendConfirmation = function() {
   return Promise.resolve()
     .then(() => {
-      return sendEmail(this._id, 'confirm', null, null)
+      return JSON.stringify({
+        token: {
+          id: this._id
+        },
+        user: {
+          fullname: this.fullname,
+          email: this.email,
+        },
+        subject: 'confirm',
+      })
+    })
+    .then(data => {
+      if (config.get('PUBSUB_TOPIC_EMAIL')) {
+        return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
+      }
+      console.log('No pubsub topic defined to send confirmation email. message not send')
+      return;
     })
     .catch(e => {
       console.log(e)
     })
 }
 
-UserSchema.statics.findByToken = function(token, cb) {
-  if (!token) return cb(null);
-  return verify(token, config.get('SECRET'), { algorithms: ['HS512'] }, (err, payload) => {
-    if(err) return cb(err);
-    return this.findById(payload.id, cb)
+UserSchema.statics.findByToken = function(token) {
+  return new Promise((res, rej) => {
+    if (!token) return rej('You must provide a valid token');
+    verify(token, config.get('SECRET'), (err, payload) => {
+      if(err) rej(err);
+      res(payload)
+    })
+  })
+  .then(payload => {
+    return this.findById(payload.id);
   })
 }
 
-UserSchema.statics.findByPublicToken = function(token, cb) {
-  if (!token) return cb(null);
-  return verify(token, config.get('SECRET_PUBLIC'), { algorithms: ['HS512'] }, (err, payload) => {
-    if(err) return cb(err);
-    return this.findById(payload.id, cb)
+UserSchema.statics.findByToken = function(token, toptions, options) {
+  return new Promise((res, rej) => {
+    if (!token) return rej('You must provide a valid token');
+    verify(token, config.get('SECRET'), toptions, (err, payload) => {
+      if(err) rej(err);
+      res(payload)
+    })
+  })
+  .then(payload => {
+    return this.findById(payload.id, options);
   })
 }
 

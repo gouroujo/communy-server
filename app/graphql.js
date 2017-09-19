@@ -23,8 +23,9 @@ if (config.get('OPTICS_API_KEY')) {
 
 module.exports = function (request, result) {
   const token = request.headers.authorization || request.body.variables && request.body.variables.token;
-  models.User.findByToken(token, (err, user) => {
-    graphqlExpress((req, res) => {
+  return models.User.findByToken(token)
+  .then(user => {
+    return graphqlExpress((req, res) => {
       return {
         schema: executableSchema,
         context: {
@@ -34,4 +35,8 @@ module.exports = function (request, result) {
       }
     })(request, result)
   })
+  .catch(e => {
+    console.log(e);
+    result.status(401).send(e.message)
+  });
 }

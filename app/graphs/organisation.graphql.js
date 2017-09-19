@@ -55,8 +55,17 @@ type Organisation {
   title: String
   description: String
   secret: Boolean
-  logo: String
-  cover: String
+  logo(
+    width: Int
+    height: Int
+    radius: Int
+  ): String
+  cover(
+    width: Int
+    height: Int
+    radius: Int
+  ): String
+  logoUploadOpts: String
   coverUploadOpts: String
 
   registration (

@@ -6,18 +6,21 @@ module.exports = function (req, res) {
     token,
   } = req.body;
 
-  models.User.findByPublicToken(token, { subject: 'rst_psw',})
+  return models.User.findByToken(token, { subject: 'reset'})
   .then(user => {
-    if(!user) return res.status(404).send('USER_NOT_FOUND');
-
-    return user.setPassword(password)
-    .then(() => user.getToken())
-    .then(token => {
-      return res.append('Authorization', token).sendStatus(200);
-    });
-
-  }).catch(e => {
-    console.log(e);
-    return res.sendStatus(500);
+    if (!user) return res.sendStatus(400);
+    user.password = password
+    return Promise.all([
+      user.getToken(),
+      user.save()
+    ])
+  })
+  .then(([token]) => {
+    if (!token) return;
+    return res.append('Authorization', token).sendStatus(200);
+  })
+  .catch(e => {
+    console.log(e)
+    return res.status(400).send(e.message);
   })
 }

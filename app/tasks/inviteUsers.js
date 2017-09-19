@@ -63,12 +63,15 @@ module.exports = function (users, organisation) {
       }
     })), { ordered: false })
   ]).then(([ resInvited, resConfirmed ]) => {
-    return models.Organisation.findByIdAndUpdate(organisation._id, {
-      $inc: {
-        nusers: resConfirmed.n,
-        nwt_ack: resInvited.n,
-        nwt_confirm: -resConfirmed.n,
-      }
-    }, { new: true })
+    return Promise.all([
+      models.Organisation.findByIdAndUpdate(organisation._id, {
+        $inc: {
+          nusers: resConfirmed.n,
+          nwt_ack: resInvited.n,
+          nwt_confirm: -resConfirmed.n,
+        }
+      }, { new: true }),
+      Promise.resolve(users)
+    ])
   })
 }

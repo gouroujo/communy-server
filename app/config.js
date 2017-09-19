@@ -14,11 +14,9 @@ nconf
     'ENDPOINT_URL',
     'GRAPHIQL',
     'SECRET',
-    'SECRET_PUBLIC',
-    'MAILGUN_KEY',
-    'MAILGUN_DOMAIN',
     'CLOUDINARY_SECRET',
     'CLOUDINARY_KEY',
+    'CLOUDINARY_CLOUD',
     'OPTICS_API_KEY',
     'NODE_ENV',
     'PORT'
@@ -40,11 +38,10 @@ nconf
     ENDPOINT_URL: '/graphql',
     GRAPHIQL: '',
     SECRET: 'secret',
-    SECRET_PUBLIC: 'secret',
-    MAILGUN_KEY: '',
-    MAILGUN_DOMAIN: '',
     CLOUDINARY_SECRET: '',
     CLOUDINARY_KEY: '',
+    CLOUDINARY_CLOUD: '',
+    // OPTICS_API_KEY is required to enable optics analytics on graphql queries and mutations
     OPTICS_API_KEY: '',
   });
 
@@ -58,12 +55,10 @@ if (nconf.get('PRODUCTION')) {
   if (nconf.get('SECRET') === 'secret') {
     throw new Error(`You must set SECRET as an environment variable or in config.json!`);
   }
-  if (nconf.get('SECRET_PUBLIC') === 'secret') {
-    throw new Error(`You must set SECRET_PUBLIC as an environment variable or in config.json!`);
-  }
 }
 checkConfig('CLOUDINARY_SECRET');
 checkConfig('CLOUDINARY_KEY');
+checkConfig('CLOUDINARY_CLOUD');
 
 
 function checkConfig (setting) {

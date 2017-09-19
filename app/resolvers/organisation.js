@@ -1,4 +1,6 @@
 const { models } = require('../db');
+const pubsub = require('../utils/pubsub');
+const cloudinary = require('cloudinary');
 
 // const getFieldNames = require('../utils/getFields');
 const signCloudinary = require('../utils/signCloudinary');
@@ -15,12 +17,30 @@ module.exports = {
       return organisation.ref || organisation._id || organisation.id;
     },
 
-    logo(organisation) {
-      return organisation.logo || organisation.logoUrl;
+    logo(organisation, { width, height, radius }) {
+      if (!organisation._id) return null;
+      return cloudinary.url(`organisations/${organisation._id}/logo.jpg`,{
+        gravity: "center",
+        height: height ? Math.min(height, 300) : 120,
+        radius,
+        width: width ? Math.min(width, 300) : 120,
+        crop: 'thumb',
+        default_image: 'logo',
+        sign_url: true
+      })
     },
 
-    cover(organisation) {
-      return organisation.cover || organisation.coverUrl;
+    cover(organisation, { width, height, radius }) {
+      if (!organisation._id) return null;
+      return cloudinary.url(`organisations/${organisation._id}/cover.jpg`,{
+        gravity: "center",
+        height: height ? Math.min(height, 800) : 300,
+        radius,
+        width: width ? Math.min(width, 1000) : 800,
+        crop: 'fill',
+        default_image: 'cover.jpg',
+        sign_url: true
+      })
     },
 
     role(organisation, args, { currentUser }) {
@@ -99,6 +119,27 @@ module.exports = {
       if (after) query.gte('endTime', after)
       if (before) query.lte('startTime', before)
       return query.limit(limit).skip(offset).lean().exec()
+    },
+
+    logoUploadOpts(organisation) {
+      if(!organisation || !organisation._id) return null;
+
+      const options = {
+        api_key: config.get('CLOUDINARY_KEY'),
+        timestamp: Date.now(),
+        public_id: `organisations/${organisation._id}/logo`,
+        overwrite: true,
+        invalidate: true,
+        return_delete_token: true,
+        discard_original_filename: true,
+        tags: `logo,${organisation._id},organisation`,
+        format: 'jpg',
+        resource_type: 'image',
+      };
+
+      return JSON.stringify(Object.assign({}, options, {
+        signature : signCloudinary(options)
+      }));
     },
 
     coverUploadOpts(organisation) {
@@ -276,6 +317,7 @@ module.exports = {
               "$set": {
                 "organisations.$.ack": true,
               },
+              $inc: { norganisations: 1 },
             }
           ),
           models.Registration.updateOne(
@@ -355,7 +397,6 @@ module.exports = {
             if (!user) return new Error('User Not Found');
             return inviteUsers([ user ], organisation)
           })
-          .catch(e => console.log(e));
         }
         // --- Invite by EMAIL
         if (input.email) {
@@ -363,7 +404,6 @@ module.exports = {
           .then(user => {
             return inviteUsers([ user ], organisation)
           })
-          .catch(e => console.log(e));
         }
         // --- Invite with an array of EMAILS
         if (input.emails) {
@@ -380,11 +420,39 @@ module.exports = {
           .then(users => {
             return inviteUsers(users, organisation)
           })
-          .catch(e => console.log(e));
         }
       })
-
-      return new Error('Bad Request');
+      .then(([organisation, users]) => {
+        if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+          console.log('No pubsub topic defined to send invitation emails. messages not send');
+          return organisation;
+        }
+        return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), users.map(u => ({
+          data: {
+            token: {
+              id: u.id,
+              organisationId: organisation.id,
+            },
+            author: currentUser.fullname,
+            organisation: {
+              id: organisation.id,
+              title: organisation.title,
+            },
+            user: {
+              fullname: u.fullname,
+              email: u.email,
+            },
+            subject: 'invite',
+          }
+        })))
+        .then(() => {
+          return organisation
+        })
+      })
+      .catch(e => {
+        console.log(e);
+        throw new Error('Bad Request')
+      });
     },
 
     removeUserFromOrganisation(parent, { id, input }, { currentUser }) {
@@ -393,7 +461,6 @@ module.exports = {
 
       return removeUsers([input.userId], id)
       .then(organisation => {
-        console.log(organisation)
         return organisation
       })
         .catch(e => console.log(e));

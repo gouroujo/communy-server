@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Confirmation d'inscription</title>
+<title>Invitation</title>
 <link href="styles.css" media="all" rel="stylesheet" type="text/css" />
 </head>
 
@@ -14,31 +14,34 @@
 		<td></td>
 		<td class="container" width="600">
 			<div class="content">
-				<table class="main" width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope itemtype="http://schema.org/ConfirmAction">
+				<table class="main" width="100%" cellpadding="0" cellspacing="0" itemprop="action" >
 					<tr>
 						<td class="content-wrap">
 							<meta itemprop="name" content="Confirm Email"/>
 							<table width="100%" cellpadding="0" cellspacing="0">
 								<tr>
 									<td class="content-block">
-										<h2 class="aligncenter">Bonjour {{user.firstname}}</h2>
+										<h2 class="aligncenter">Bonjour {{user.fullname}}</h2>
+									</td>
+								</tr>
+								<tr>
+									<td class="content-block aligncenter">
+										{{author}} vous a invité à rejoindre la communauté {{organisation.title}}.
+									</td>
+								</tr>
+								<tr>
+									<td class="content-block aligncenter" >
+										<a href="{{link}}" class="btn-primary">Accepter l'invitation</a>
 									</td>
 								</tr>
 								<tr>
 									<td class="content-block">
-										Vous avez demandé la ré-initialisation de votre mot de passe.
-										<br />
-										Pour en définir un nouveau, cliquez sur le bouton ci-dessous.
-									</td>
-								</tr>
-								<tr>
-									<td class="content-block" itemprop="handler" itemscope itemtype="http://schema.org/HttpActionHandler">
-										<a href="{{user.getResetUrl()}}" class="btn-primary" itemprop="url">Changer mon mot de passe</a>
+										Si vous considérez cet email comme indésirable, n'hésitez pas à nous le transférer à abuse@communy.org
 									</td>
 								</tr>
 								<tr>
 									<td class="content-block">
-										&mdash; L'équipe
+										&mdash; L'équipe {{sitename}}
 									</td>
 								</tr>
 							</table>
@@ -48,7 +51,7 @@
 				<div class="footer">
 					<table width="100%">
 						<tr>
-							<td class="aligncenter content-block">Suivez-nous <a href="http://twitter.com/mail_gun">@Mail_Gun</a> sur Twitter.</td>
+							<td class="aligncenter content-block">Suivez-nous <a href="http://twitter.com/communyteam">@CommunyTeam</a> sur Twitter.</td>
 						</tr>
 					</table>
 				</div></div>

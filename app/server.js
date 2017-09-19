@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const { graphiqlExpress } = require('graphql-server-express');
 const OpticsAgent = require('optics-agent');
+const cloudinary = require('cloudinary');
+
 const config = require('./config');
 
 const db = require('./db');
@@ -11,12 +13,14 @@ const db = require('./db');
 const connection = db.mongoose.connection;
 const app = express();
 
+cloudinary.config({
+  cloud_name: config.get('CLOUDINARY_CLOUD'), 
+  api_key: config.get('CLOUDINARY_KEY'),
+  api_secret: config.get('CLOUDINARY_SECRET')
+});
+
 app.set('trust proxy', 1);
 app.use(helmet());
-
-if (config.get('OPTICS_API_KEY')) {
-  OpticsAgent.configureAgent({ apiKey: config.get('OPTICS_API_KEY') })
-}
 
 app.use(config.get('ENDPOINT_URL'),
   compression(),
@@ -38,6 +42,8 @@ app.use('/auth/login', require('./auth/login'));
 app.use('/auth/recover', require('./auth/recover'));
 app.use('/auth/reset', require('./auth/reset'));
 app.use('/auth/signin', require('./auth/signin'));
+app.use('/auth/invite', require('./auth/invite'));
+
 
 connection.on('error', console.error.bind(console, 'connection error:'));
 connection.once('open', function() {

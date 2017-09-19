@@ -14,36 +14,37 @@
 		<td></td>
 		<td class="container" width="600">
 			<div class="content">
-				<table class="main" width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope itemtype="http://schema.org/ConfirmAction">
+				<table class="main" width="100%" cellpadding="0" cellspacing="0" itemprop="action" >
 					<tr>
 						<td class="content-wrap">
 							<meta itemprop="name" content="Confirm Email"/>
 							<table width="100%" cellpadding="0" cellspacing="0">
 								<tr>
 									<td class="content-block">
-										<h2 class="aligncenter">Bienvenue {{user.firstname}}</h2>
+										<h2 class="aligncenter">Bienvenue {{user.fullname}}</h2>
 									</td>
 								</tr>
 								<tr>
-									<td class="content-block">
+									<td class="content-block aligncenter">
 										Pour finaliser votre inscription, vous devez cliquer sur le bouton ci-dessous.
 									</td>
 								</tr>
 								<tr>
+									<td class="content-block aligncenter" >
+										<a href="{{link}}" class="btn-primary">Confirmer mon inscription</a>
+									</td>
+								</tr>
+								<tr>
 									<td class="content-block">
-										Nous avons besoin de savoir que cette addresse email est bien la votre pour vous envoyer des informations relatives à votre compte.
+										Nous avons besoin de savoir que l'adresse {{user.email}} est bien la votre pour vous envoyer des informations relatives à votre compte.
 									</br>
 										Si vous n'êtes pas à l'orginie de cette action, veuillez ignorer cet email.
 									</td>
 								</tr>
-								<tr>
-									<td class="content-block" itemprop="handler" itemscope itemtype="http://schema.org/HttpActionHandler">
-										<a href="{{user.getConfirmUrl()}}" class="btn-primary" itemprop="url">Confirmer mon inscription</a>
-									</td>
-								</tr>
+
 								<tr>
 									<td class="content-block">
-										&mdash; L'équipe
+										&mdash; L'équipe {{sitename}}
 									</td>
 								</tr>
 							</table>
@@ -53,7 +54,7 @@
 				<div class="footer">
 					<table width="100%">
 						<tr>
-							<td class="aligncenter content-block">Suivez-nous <a href="http://twitter.com/mail_gun">@Mail_Gun</a> sur Twitter.</td>
+							<td class="aligncenter content-block">Suivez-nous <a href="http://twitter.com/communyteam">@CommunyTeam</a> sur Twitter.</td>
 						</tr>
 					</table>
 				</div></div>

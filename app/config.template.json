@@ -1,0 +1,10 @@
+{
+  "CLOUDINARY_KEY": "",
+  "CLOUDINARY_SECRET": "",
+  "CLOUDINARY_CLOUD": "",
+  "OPTICS_API_KEY": "",
+  "SITENAME": "",
+  "HOST": "",
+  "MONGO_URI": "",
+  "SECRET": ""
+}

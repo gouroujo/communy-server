@@ -1,10 +1,6 @@
 const { omit, difference } = require('lodash');
 const { models } = require('../db');
 const getFieldNames = require('../utils/getFields');
-// const { addToOrganisation, candidateToOrganisation, registerToOrganisation } = require('../tasks/addToOrganisation');
-
-const candidateToOrganisation = require('../tasks/candidateToOrganisation');
-const { answerYesToEvent, answerMaybeToEvent, answerNoToEvent } = require ('../tasks/answerToEvent');
 
 module.exports = {
   User: {
@@ -19,7 +15,7 @@ module.exports = {
 
     organisations(user, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
-        'id', 'title', 'logo', 'role', 'ack','isWaitingAck', 'isWaitingConfirm', '__typename'
+        'id', 'title', 'logo', 'role', 'ack','confirm', '__typename'
       ])
 
       if (fields.length === 0) {
@@ -29,12 +25,9 @@ module.exports = {
       return models.Organisation.find({
         _id: { $in: user.organisations.map(org => org._id) }
       }).then(organisations => {
-        const test = organisations.map((organisation) => {
-          const a = Object.assign({}, user.organisations.id(organisation._id), organisation.toObject())
-          console.log(a)
-          return a;
-        })
-        return test;
+        return organisations.map((organisation) => {
+          return Object.assign({}, user.organisations.id(organisation._id), organisation.toObject())
+        });
       })
     },
 

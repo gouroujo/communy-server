@@ -5,7 +5,6 @@ module.exports = function (req, res) {
   return models.User.findOne({ email }, '+password +salt').then(user => {
     if(user) {
       return user.comparePassword(password).then(auth => {
-        console.log(auth)
         if(!auth) return res.status(401).send('BAD CREDENTIALS');
 
         return user.getToken()

@@ -19,8 +19,7 @@ module.exports = {
         return topic.publisher()
       })
       .then(publisher => {
-        const dataBuffer = Buffer.from(data);
-        return publisher.publish(dataBuffer)
+        return publisher.publish(data)
       })
       .then(results => {
         const messageId = results[0];

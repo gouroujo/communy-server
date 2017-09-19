@@ -1,4 +1,6 @@
 const models = require('../db').models;
+const config = require('../config');
+const pubsub = require('../utils/pubsub');
 
 module.exports = function (req, res) {
   const {
@@ -10,11 +12,28 @@ module.exports = function (req, res) {
   models.User.findOne({ email })
   .then(user => {
     if (!user) return res.status(404).send('USER NOT FOUND');
-    // TODO: send email
+    return JSON.stringify({
+      token: {
+        id: user._id
+      },
+      user: {
+        fullname: user.fullname,
+        email: user.email,
+      },
+      subject: 'reset',
+    })
+  })
+  .then(data => {
+    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+      throw new Error('No pubsub topic defined to send reset email. message not send')
+    }
+    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
+  })
+  .then(() => {
     return res.sendStatus(200);
   })
   .catch(e => {
     console.log(e);
-    return res.sendStatus(500);
+    res.status(500).send(e.message);
   })
 }

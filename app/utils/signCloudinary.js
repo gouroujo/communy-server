@@ -1,4 +1,4 @@
-const { omit } = require('lodash');
+const omit = require('lodash/omit');
 const crypto = require('crypto');
 const config = require('../config');
 

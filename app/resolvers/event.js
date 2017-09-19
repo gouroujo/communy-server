@@ -1,7 +1,5 @@
 const { omit, difference } = require('lodash');
 const { mongoose, models } = require('../db');
-
-const { answerYesToEvent, answerMaybeToEvent, answerNoToEvent } = require ('../tasks/answerToEvent');
 const getFieldNames = require('../utils/getFields');
 
 module.exports = {
@@ -71,13 +69,13 @@ module.exports = {
     },
     organisation(event, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
-        'id', 'title', 'logoUrl', '__typename'
+        'id', 'title', 'logo', '__typename'
       ]);
       if (fields.length === 0) {
         return {
           id: event.organisation._id,
           title: event.organisation.title,
-          logoUrl: event.organisation.logoUrl,
+          logo: event.organisation.logo,
         }
       } else {
         return models.Organisation.findById(event.organisation._id)
