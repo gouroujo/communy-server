@@ -38,6 +38,7 @@ type User {
   birthplace: String
   phone1: String
   phone2: String
+  answer (eventId: ID): EventAnswer
 
   organisations (
     role: OrganisationRole

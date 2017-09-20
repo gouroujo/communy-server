@@ -102,10 +102,10 @@ module.exports = {
       return query.sort('endTime').limit(limit).skip(offset).lean().exec()
     },
 
-    event(parent, { id }, { currentUser }) {
+    event(parent, { id }, { currentUser, loaders }) {
       if (!currentUser) return new Error('Unauthorized');
 
-      return models.Event.findById(id).then(event => {
+      return loaders.Event.load(id).then(event => {
         if (!event) return new Error('Not found');
         if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
         if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_view`))return new Error('Forbidden');

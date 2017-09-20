@@ -7,14 +7,13 @@ const OpticsAgent = require('optics-agent');
 const cloudinary = require('cloudinary');
 
 const config = require('./config');
-
 const db = require('./db');
 
 const connection = db.mongoose.connection;
 const app = express();
 
 cloudinary.config({
-  cloud_name: config.get('CLOUDINARY_CLOUD'), 
+  cloud_name: config.get('CLOUDINARY_CLOUD'),
   api_key: config.get('CLOUDINARY_KEY'),
   api_secret: config.get('CLOUDINARY_SECRET')
 });

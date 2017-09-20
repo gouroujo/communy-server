@@ -78,6 +78,7 @@ type Organisation {
     offset: Int
     ack: Boolean
     confirm: Boolean
+    search: String
   ): [Registration]
 
   events (

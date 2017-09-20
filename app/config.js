@@ -10,6 +10,8 @@ nconf
     'PUBSUB_TOPIC_EMAIL',
     'SITENAME',
     'HOST',
+    'MEMCACHE_URL',
+    'USER_CACHE_LIFETIME',
     'MONGO_URI',
     'ENDPOINT_URL',
     'GRAPHIQL',
@@ -27,7 +29,8 @@ nconf
   .defaults({
     // This is the id of your project in the Google Cloud Developers Console.
     GCLOUD_PROJECT: '',
-
+    USER_CACHE_LIFETIME: 60,
+    MEMCACHE_URL: process.env.GAE_MEMCACHE_HOST ? `${process.env.GAE_MEMCACHE_HOST}:${process.env.GAE_MEMCACHE_PORT}` : 'localhost:11211',
     // MongoDB connection string
     // https://docs.mongodb.org/manual/reference/connection-string/
     MONGO_URI: 'mongodb://localhost:27017/communy',

@@ -9,9 +9,17 @@ const RegistrationSchema = new Schema({
       ref: 'User',
       required: true,
     },
-    firstname: String,
-    lastname: String,
-    email: { type: String, required: true },
+    fullname: {
+      type: String,
+      trim: true,
+      index: true
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
     avatar: String,
   },
   organisation: {

@@ -27,7 +27,6 @@ const EventSchema = new Schema({
       index: true,
     },
     title: String,
-    logo: String,
   },
   nusers: { type: Number, default: 0 },
   yes: [SubUserSchema],

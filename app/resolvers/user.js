@@ -1,5 +1,6 @@
 const { omit, difference } = require('lodash');
 const { models } = require('../db');
+const memcached = require('../memcached');
 const getFieldNames = require('../utils/getFields');
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
     },
 
     fullname(user) {
+      if (user.fullname) return user.fullname;
       if (!user.firstname && !user.lastname) return user.email;
       return `${user.firstname ? user.firstname : ''} ${user.lastname ? user.lastname : ''}`;
     },
@@ -31,6 +33,17 @@ module.exports = {
       })
     },
 
+    answer(user, { eventId }, { currentUser, loaders }) {
+      return loaders.Event.load(eventId)
+      .then(event => {
+        if (!event) return null;
+        if (event.yes && event.yes.find(u => String(u._id) === String(user._id))) return 'yes';
+        if (event.mb && event.mb.find(u => String(u._id) === String(user._id))) return 'mb';
+        if (event.no && event.no.find(u => String(u._id) === String(user._id))) return 'no';
+        return null;
+      })
+    },
+
     events(user, { before, after, limit, offset, organisationId, answer = 'yes' }, { currentUser }, info) {
       if (!user) return [];
       const query = models.Event.find({});
@@ -50,47 +63,10 @@ module.exports = {
     }
   },
 
-  OrganisationUser: {
-    id(user) {
-      return user.id || user._id;
-    },
-    fullname(user) {
-      if (!user.firstname && !user.lastname) return user.email;
-      return `${user.firstname} ${user.lastname}`;
-    },
-    events(user, { before, after, limit, offset, answer }, { currentUser }, info) {
-      if (!user) return [];
-      const query = models.Event.find({});
-      query.select('-yes -no -mb');
-      query.where('organisation.ref').equals(user.organisationId);
-      if (answer) query.where(answer).elemMatch({ ref: user._id || user.id });
-      if (after) query.gte('endTime', after);
-      if (before) query.lte('startTime', before);
-
-      return query.sort('endTime').limit(limit).skip(offset).lean().exec();
-    },
-    isWaitingAck(user) {
-      return user.ack;
-    },
-    isWaitingConfirm(user) {
-      return !user.role;
-    },
-  },
-
-  EventUser: {
-    id(user) {
-      return user.id || user._id;
-    },
-    fullname(user) {
-      if (!user.firstname && !user.lastname) return user.email;
-      return `${user.firstname} ${user.lastname}`;
-    },
-  },
-
   Query: {
-    user(parent, { id, organisationId }, { currentUser }) {
+    user(parent, { id, organisationId }, { currentUser, loaders }) {
       if (!currentUser) return new Error('Unauthorized');
-      return models.User.findById(id);
+      return loaders.User.load(id);
     },
 
     users(parent, { organisationId, limit, offset }, { currentUser }) {
@@ -131,8 +107,9 @@ module.exports = {
       });
     },
 
-    me(parent, args, { currentUser }) {
-      return currentUser;
+    me(parent, args, { currentUser, loaders }) {
+      if (!currentUser) return null;
+      return loaders.User.load(currentUser._id);
     },
 
   },
@@ -142,11 +119,24 @@ module.exports = {
       if (!currentUser) return new Error('Unauthorized');
       if (id !== String(currentUser.id)) return new Error('Forbidden');
 
-      return models.User.findByIdAndUpdate(
-        id,
-        input,
-        { new: true }
-      )
+      return models.User.findByIdAndUpdate(id,input, { new: true })
+      .then(user => {
+        return Promise.all([
+          (!input.email && !input.firstname && !input.lastname) ? Promise.resolve() : (
+            models.Registration.updateMany(
+              {
+                "user._id": user._id
+              },
+              {
+                "user.email": user.email,
+                "user.fullname": user.fullname
+              }
+            )
+          ),
+          memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
+        ])
+        .then(() => user)
+      })
     },
   }
 }

@@ -35,7 +35,6 @@ const generateSalt = () => new Promise((resolve, reject) => {
 
 const SubOrganisationSchema = new Schema({
   title: { type: String, required: true },
-  logo: String,
   role: {
     type: String,
     enum: values(orgStatus).concat([null]),
@@ -72,6 +71,7 @@ const UserSchema = new Schema({
     type: String,
     index: true,
     sparse: true,
+    unique: true,
   },
   organisations: {
     type: [SubOrganisationSchema],
@@ -81,20 +81,6 @@ const UserSchema = new Schema({
 }, {
   timestamps: true
 });
-
-UserSchema.index(
-  {
-    firstname: 'text',
-    lastname: 'text',
-    email: 'text',
-  }, {
-    name: 'user search',
-    weights: {
-      lastname: 3,
-      firstname: 1,
-      email: 2,
-    }
-  });
 
 UserSchema.virtual('fullname')
   .get(function() {

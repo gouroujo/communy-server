@@ -1,15 +1,17 @@
+const cloudinary = require('cloudinary');
+const { find, pick, omit, difference } = require('lodash');
+
+const config = require('../config');
+const { orgMemberStatus, orgStatus } = require('../dict');
 const { models } = require('../db');
 const pubsub = require('../utils/pubsub');
-const cloudinary = require('cloudinary');
-
-// const getFieldNames = require('../utils/getFields');
+const getFieldNames = require('../utils/getFields');
 const signCloudinary = require('../utils/signCloudinary');
 
 const inviteUsers = require('../tasks/inviteUsers');
 const removeUsers = require('../tasks/removeUsers');
 
-const config = require('../config');
-const { orgMemberStatus, orgStatus } = require('../dict');
+
 
 module.exports = {
   Organisation: {
@@ -85,21 +87,41 @@ module.exports = {
       return organisation.nwt_confirm;
     },
 
-    registration(organisation, { userId }, { currentUser }) {
+    registration(organisation, { userId }, { currentUser }, info) {
+      if (!currentUser) return new Error('Unauthorized');
+
+      const fields = difference(getFieldNames(info), [
+        'joined', 'ack', 'confirm', 'role', '__typename'
+      ])
+      if (fields.length === 0) {
+        return ((userId) ? models.User.findById(userId) : Promise.resolve(currentUser))
+          .then(user => user.organisations ? pick(find(user.organisations, ['_id', organisation._id]), ['ack', 'confirm', 'role']) : null)
+      }
+
       return models.Registration.findOne({
         "organisation._id": organisation._id,
         "user._id": userId || currentUser._id,
       })
+
     },
 
-    registrations(organisation, { role, limit, offset, ack = true, confirm = true }, { currentUser }, info) {
+    registrations(organisation, { search, role, limit, offset, ack = true, confirm = true }, { currentUser }, info) {
       if (!currentUser) return new Error('Unauthorized');
+
+      const fields = difference(getFieldNames(info), [
+        'joined', 'ack', 'confirm', 'role', '__typename'
+      ])
+      if (fields.length === 0) {
+        return Promise.resolve(currentUser)
+          .then(user => user.organisations ? user.organisations.map(o => pick(o, ['ack', 'confirm', 'role'])) : [])
+      }
 
       const query = models.Registration.find({
         "organisation._id": organisation._id,
         "ack": ack,
         "confirm": confirm
       });
+      if (typeof search !== 'undefined') query.where('user.fullname').regex(new RegExp(search, 'i'))
       if (typeof role !== 'undefined') query.where('role').equals(role)
       return query.limit(limit).skip(offset).lean().exec();
     },
@@ -188,13 +210,21 @@ module.exports = {
         nusers: 1,
       }))
       .then(organisation => {
-        currentUser.organisations.push(Object.assign({}, organisation.toObject(), { ack: true, role: orgStatus.ADMIN }))
+        currentUser.organisations.push()
         currentUser.norganisations++;
         return Promise.all([
           Promise.resolve(organisation),
-          currentUser.save(),
+          models.User.update({ _id: currentUser._id }, {
+            $push: { organisations: Object.assign({}, organisation.toObject(), { ack: true, role: orgStatus.ADMIN }) },
+            $inc: { norganisations: 1 }
+          }),
           models.Registration.create({
-            user: currentUser.toObject(),
+            user: {
+              _id: currentUser._id,
+              fullname: currentUser.fullname,
+              email: currentUser.email,
+              avatar: currentUser.avatar,
+            },
             organisation: organisation.toObject(),
             ack: true,
             confirm: true,
@@ -370,7 +400,12 @@ module.exports = {
               {
                 "$set": {
                   "organisation": organisation,
-                  "user": currentUser,
+                  "user": {
+                    _id: currentUser._id,
+                    fullname: currentUser.fullname,
+                    email: currentUser.email,
+                    avatar: currentUser.avatar,
+                  },
                   "ack": true,
                   "confirm": false,
                 }
