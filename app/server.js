@@ -37,7 +37,7 @@ app.use('/auth/signin', require('./auth/signin'));
 app.use('/auth/invite', require('./auth/invite'));
 
 app.use('/admin/*', bodyParser.json());
-app.use('/admin/createorg', require('./admin/createorg'));
+app.use('/admin/createorg', require('./admin/join'));
 
 connection.on('error', console.error.bind(console, 'connection error:'));
 connection.once('open', function() {
