@@ -1,0 +1,29 @@
+Bonjour {{user.fullname}},
+
+Comment allez-vous ? Je m'apelle Jonathan, je suis bénévole dans différentes associations depuis plus de 10ans et j'ai également la chance d'être ingénieur !
+J'ai décidé de consacrer une partie de ma vie à aider les associations en aidant les communautés sur un problème très fréquent :
+
+ ** Comment gérer efficacement son planning et ses membres ? **
+
+J'ai donc développé Communy.org, une plateforme dédiée aux communautés, c'est très simple:
+ 1 - Vous créez votre communauté
+ 2 - Vous invitez vos bénévoles / membres / volontaires / amis / camarades ...
+ 3 - Vous créez vos activités
+
+Vous n'avez plus qu'a regarder vos membres s'inscrire aux activités !
+{{message}}
+
+Vous voulez tester pour voir ? Pas de soucis, je me suis permis de créer une communauté "secrete" pour {{organisation.title}}. Vous pouvez y accéder en cliquant sur le lien ci-dessous :
+{{link}}
+
+J'ai oublié de préciser que Communy.org c'est gratuit ! L'objectif c'est d'avoir un maximum de membres d'ici un an, alors n'hésitez pas à partager le bon plan !
+
+En bonus, vous pouvez également faire gagner de la visibilité à votre communauté et recruter de nouveaux membres en la rendant visible sur la plateforme.
+
+Si vous avez des questions, n'hésitez surtout pas à m'écrire un email: jonathan@communy.org
+En espérant vous retrouver rapidement sur Communy,
+
+Bien amicalement,
+
+Jonathan
+Fondateur de Communy.org

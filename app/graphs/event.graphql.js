@@ -42,6 +42,8 @@ type Event {
   description: String
   startTime: DateTime!
   endTime: DateTime!
+  duration: String!
+  days: [String!]!
   allDay: Boolean
   organisation: Organisation!
   nanswer: Int

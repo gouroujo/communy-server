@@ -15,15 +15,18 @@ const textTemplates = {
   confirm: 'confirm_email.txt',
   reset: 'reset_password.txt',
   invite: 'invite.txt',
+  join: 'join.txt',
 }
 const subjectTemplates = {
   confirm: 'Confirmez votre email',
   reset: 'Mot de passe perdu',
-  invite: 'Invitation à rejoindre {{organisation.title}}'
+  invite: 'Invitation à rejoindre {{organisation.title}}',
+  join: 'Gérez {{organisation.title}} plus facilement',
 }
 mu.root = __dirname + '/emails';
 
 function compileEmail(filename, data) {
+  if (!filename) return Promise.resolve();
   return new Promise((resolve, reject) => {
     let email = '';
     mu.compileAndRender(filename, data)
@@ -59,7 +62,7 @@ function getEmail(key, data) {
   ]).then(([htmlPlain, text, subject ]) => {
     return {
       text: text,
-      html: juice(htmlPlain, { extraCss }),
+      html: htmlPlain ? juice(htmlPlain, { extraCss }) : null,
       subject: subject
     }
   })

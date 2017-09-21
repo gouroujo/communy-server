@@ -1,4 +1,5 @@
 const { omit, difference } = require('lodash');
+const moment = require('moment');
 const { mongoose, models } = require('../db');
 const getFieldNames = require('../utils/getFields');
 
@@ -21,6 +22,21 @@ module.exports = {
     },
     nmb(event) {
       return event.mb && event.mb.length
+    },
+
+    duration(event) {
+      return moment.duration(event.endTime - event.startTime).toISOString()
+    },
+
+    days(event) {
+      let start = moment(event.startTime).hours(0).minutes(0).seconds(0).milliseconds(0);
+      const end = moment(event.endTime);
+      const dateArray = [];
+      while (start < end) {
+        dateArray.push(start.format('YYYYMMDD'));
+        start = start.clone().add(1, 'day');
+      }
+      return dateArray;
     },
 
     answer(event, { userId }, { currentUser }) {

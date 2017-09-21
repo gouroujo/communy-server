@@ -1,16 +1,16 @@
-const cloudinary = require('cloudinary');
 const { find, pick, omit, difference } = require('lodash');
 
 const config = require('../config');
 const { orgMemberStatus, orgStatus } = require('../dict');
 const { models } = require('../db');
 const pubsub = require('../utils/pubsub');
+const cloudinary = require('../cloudinary');
+
 const getFieldNames = require('../utils/getFields');
 const signCloudinary = require('../utils/signCloudinary');
 
 const inviteUsers = require('../tasks/inviteUsers');
 const removeUsers = require('../tasks/removeUsers');
-
 
 
 module.exports = {
@@ -95,7 +95,18 @@ module.exports = {
       ])
       if (fields.length === 0) {
         return ((userId) ? models.User.findById(userId) : Promise.resolve(currentUser))
-          .then(user => user.organisations ? pick(find(user.organisations, ['_id', organisation._id]), ['ack', 'confirm', 'role']) : null)
+          .then(user => {
+            if (!user.organisations) throw new Error('no organisations for user')
+            const o = find(user.organisations, ['_id', organisation._id]);
+            if (!o) throw new Error('organisation not found for user')
+            return pick(o, ['ack', 'confirm', 'role'])
+          })
+          .catch(() => {
+            return models.Registration.findOne({
+              "organisation._id": organisation._id,
+              "user._id": userId || currentUser._id,
+            })
+          })
       }
 
       return models.Registration.findOne({
@@ -105,24 +116,18 @@ module.exports = {
 
     },
 
-    registrations(organisation, { search, role, limit, offset, ack = true, confirm = true }, { currentUser }, info) {
+    registrations(organisation, { search, role, limit, offset, ack, confirm }, { currentUser }, info) {
       if (!currentUser) return new Error('Unauthorized');
-
-      const fields = difference(getFieldNames(info), [
-        'joined', 'ack', 'confirm', 'role', '__typename'
-      ])
-      if (fields.length === 0) {
-        return Promise.resolve(currentUser)
-          .then(user => user.organisations ? user.organisations.map(o => pick(o, ['ack', 'confirm', 'role'])) : [])
-      }
 
       const query = models.Registration.find({
         "organisation._id": organisation._id,
-        "ack": ack,
-        "confirm": confirm
       });
+
       if (typeof search !== 'undefined') query.where('user.fullname').regex(new RegExp(search, 'i'))
       if (typeof role !== 'undefined') query.where('role').equals(role)
+      if (typeof ack !== 'undefined') query.where('ack').equals(ack)
+      if (typeof confirm !== 'undefined') query.where('confirm').equals(confirm)
+
       return query.limit(limit).skip(offset).lean().exec();
     },
 
@@ -215,7 +220,7 @@ module.exports = {
         return Promise.all([
           Promise.resolve(organisation),
           models.User.update({ _id: currentUser._id }, {
-            $push: { organisations: Object.assign({}, organisation.toObject(), { ack: true, role: orgStatus.ADMIN }) },
+            $push: { organisations: Object.assign({}, organisation.toObject(), { ack: true, confirm: true, role: orgStatus.ADMIN }) },
             $inc: { norganisations: 1 }
           }),
           models.Registration.create({
@@ -230,8 +235,9 @@ module.exports = {
             confirm: true,
             role: orgStatus.ADMIN,
           })
-        ]).then(([ organisation ]) => organisation);
-      });
+        ])
+      })
+      .then(([ organisation ]) => organisation);
     },
 
     editOrganisation(parent, { id, input }, { currentUser }) {

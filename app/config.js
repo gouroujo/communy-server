@@ -20,6 +20,7 @@ nconf
     'CLOUDINARY_KEY',
     'CLOUDINARY_CLOUD',
     'OPTICS_API_KEY',
+    'ADMIN_PASSWORD',
     'NODE_ENV',
     'PORT'
   ])
@@ -46,6 +47,7 @@ nconf
     CLOUDINARY_CLOUD: '',
     // OPTICS_API_KEY is required to enable optics analytics on graphql queries and mutations
     OPTICS_API_KEY: '',
+    ADMIN_PASSWORD: '',
   });
 
 nconf.set('PRODUCTION', process.env.NODE_ENV === 'production');
