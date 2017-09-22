@@ -6,7 +6,7 @@ const config = require('./config');
 const { verify } = require('jsonwebtoken');
 const { mongoose, models } = require('./db');
 
-const memcached = require('./memcached');
+// const memcached = require('./memcached');
 const verifyAsync = require('util').promisify(verify);
 
 const executableSchema = makeExecutableSchema({
@@ -38,8 +38,9 @@ function createLoaders() {
     User: new DataLoader(id => {
       return models.User.findById(id)
         .then(user => {
-          return memcached.set(id, user.toObject(), config.get('USER_CACHE_LIFETIME'))
-          .then(() => Promise.resolve([ user ]))
+          return Promise.resolve([ user ])
+          // return memcached.set(id, user.toObject(), config.get('USER_CACHE_LIFETIME'))
+          // .then(() => Promise.resolve([ user ]))
         })
     }, { batch: false }),
   }
@@ -55,14 +56,15 @@ module.exports = function (request, result) {
   })
   .then(payload => {
     if (!payload) return null;
-    return memcached.get(payload.id)
-      .then(data => {
-        if (data) {
-          return memcached.touch(payload.id, config.get('USER_CACHE_LIFETIME'))
-            .then(() => new models.User(data))
-        }
-        return loaders.User.load(payload.id)
-      })
+    return loaders.User.load(payload.id);
+    // return memcached.get(payload.id)
+    //   .then(data => {
+    //     if (data) {
+    //       return memcached.touch(payload.id, config.get('USER_CACHE_LIFETIME'))
+    //         .then(() => new models.User(data))
+    //     }
+    //     return loaders.User.load(payload.id)
+    //   })
   })
   .then(user => {
     return graphqlExpress((req, res) => {

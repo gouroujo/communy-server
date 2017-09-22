@@ -1,6 +1,6 @@
 const { omit, difference } = require('lodash');
 const { models } = require('../db');
-const memcached = require('../memcached');
+// const memcached = require('../memcached');
 const getFieldNames = require('../utils/getFields');
 
 module.exports = {
@@ -132,8 +132,8 @@ module.exports = {
                 "user.fullname": user.fullname
               }
             )
-          ),
-          memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
+          )//,
+          // memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
         ])
         .then(() => user)
       })

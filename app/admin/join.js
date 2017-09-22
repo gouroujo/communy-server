@@ -1,4 +1,5 @@
 const cloudinary = require('../cloudinary');
+const pubsub = require('../utils/pubsub');
 const config = require('../config');
 const models = require('../db').models;
 const createOrganisation = require('../resolvers/organisation').Mutation.createOrganisation;
