@@ -37,6 +37,7 @@ module.exports = function(req, res) {
         },
         organisation: {
           title: o.title,
+          prefix: organisation.prefix,
         },
         subject: 'join'
       })),

@@ -28,7 +28,8 @@ module.exports = {
         width: width ? Math.min(width, 300) : 120,
         crop: 'thumb',
         default_image: 'logo',
-        sign_url: true
+        sign_url: true,
+        secure: true,
       })
     },
 
@@ -41,7 +42,8 @@ module.exports = {
         width: width ? Math.min(width, 1000) : 800,
         crop: 'fill',
         default_image: 'cover.jpg',
-        sign_url: true
+        sign_url: true,
+        secure: true,
       })
     },
 

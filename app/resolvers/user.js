@@ -117,26 +117,30 @@ module.exports = {
   Mutation: {
     editUser(parent, { id, input }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
-      if (id !== String(currentUser.id)) return new Error('Forbidden');
+      // TODO: id is not used at the moment
 
-      return models.User.findByIdAndUpdate(id,input, { new: true })
-      .then(user => {
-        return Promise.all([
-          (!input.email && !input.firstname && !input.lastname) ? Promise.resolve() : (
-            models.Registration.updateMany(
-              {
-                "user._id": user._id
-              },
-              {
-                "user.email": user.email,
-                "user.fullname": user.fullname
-              }
-            )
-          )//,
-          // memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
-        ])
-        .then(() => user)
-      })
+      currentUser.set(input);
+      return Promise.all([
+        currentUser.save(),
+        (
+          input.email === currentUser.email &&
+          input.firstname === currentUser.firstname &&
+          input.lastname === currentUser.lastname
+        ) ? Promise.resolve() : (
+          models.Registration.updateMany(
+            {
+              "user._id": user._id
+            },
+            {
+              "user.email": user.email,
+              "user.fullname": user.fullname
+            }
+          )
+        )
+      ])
+      .then(() => currentUser)
+      .catch(e => console.log(e));
+      // memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
     },
   }
 }
