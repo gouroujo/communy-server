@@ -67,52 +67,21 @@ type User {
   ): Int!
 }
 
-type OrganisationUser {
-  id: ID!
-  ref: ID!
-  firstname: String
-  lastname: String
-  fullname: String
-  email: String
-  avatar: String
-  birthday: Date
-  birthplace: String
-  phone1: String
-  phone2: String
-
-  events (
-    after: Date
-    before: Date
-    answer: EventAnswer
-    limit: Int
-    offset: Int
-  ): [Event!]
-
-  role: OrganisationRole
-  isWaitingAck: Boolean!
-  isWaitingConfirm: Boolean!
-}
-
-type EventUser {
-  id: ID!
-  firstname: String
-  lastname: String
-  fullname: String
-  email: String
-  avatar: String
-
-  answer: EventAnswer
-}
-
 input UserInput {
   firstname: String
   lastname: String
-  email: String
+  email: String!
   password: String
   birthday: Date
   birthplace: String
   phone1: String
   phone2: String
+}
+
+input OrganisationUserInput {
+  email: String!
+  firstname: String
+  lastname: String
 }
 `;
 
