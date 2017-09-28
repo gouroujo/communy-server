@@ -121,6 +121,7 @@ input ConfirmUserOrganisationInput {
 
 input AddUsersToOrganisationInput {
   users: [OrganisationUserInput!]!
+  message: String
 }
 
 input RemoveUserFromOrganisationInput {

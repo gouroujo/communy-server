@@ -133,6 +133,7 @@ module.exports = function (parent, { id, input }, { currentUser }) {
           fullname: user.fullname,
           email: user.email,
         },
+        message: input.message,
         subject: 'invite',
       }))
     ])
