@@ -112,7 +112,7 @@ module.exports = {
       if (organisationId) {
         query.where('organisation._id').equals(organisationId)
       } else {
-        query.in('organisation._id', currentUser.permissions.permissions('organisation:?:events'))
+        query.in('organisation._id', currentUser.permissions.permissions('organisation:?:event_list'))
       }
 
       return query.sort('endTime').limit(limit).skip(offset).lean().exec()

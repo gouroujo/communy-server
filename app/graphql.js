@@ -42,7 +42,7 @@ function createLoaders() {
           // return memcached.set(id, user.toObject(), config.get('USER_CACHE_LIFETIME'))
           // .then(() => Promise.resolve([ user ]))
         })
-    }, { batch: false }),
+    }, { batch: false, cacheKeyFn: key => String(key) }),
   }
 }
 

@@ -17,9 +17,8 @@ module.exports = {
 
     organisations(user, args, ctx, info) {
       const fields = difference(getFieldNames(info), [
-        'id', 'title', 'logo', 'role', 'ack','confirm', '__typename'
+        'id', 'title', 'logo', 'role', 'ack','confirm', 'registration', '__typename'
       ])
-
       if (fields.length === 0) {
         return user.organisations;
       }
@@ -68,30 +67,6 @@ module.exports = {
       if (!currentUser) return new Error('Unauthorized');
       return loaders.User.load(id);
     },
-
-    users(parent, { organisationId, limit, offset }, { currentUser }) {
-      if (!currentUser) return new Error('Unauthorized');
-
-      // if (organisationId && ) return new Error('Forbidden');
-
-      const query = models.User.find().sort('firstname');
-
-      // let query;
-      //
-      // if (organisationId) {
-      //   if (!currentUser.permissions.check(`organisation:${organisationId}:list_user`)) return new Error('Forbidden');
-      //   query = models.User.find()
-      //     .where('organisations').elemMatch({ ref: organisationId, role: { $ne: null }})
-      //     .sort('firstname');
-      // } else {
-      //   if (!search) return new Error('Forbidden');
-      //   query =
-      //   query.mongooseOptions({ fields: 'firstname lastname'})
-      // }
-
-      return query.limit(limit).skip(offset).exec()
-    },
-
     searchUsers(parent, { emails, limit, offset }, { currentUser }) {
       return models.User.find({
         email: { $in: emails }

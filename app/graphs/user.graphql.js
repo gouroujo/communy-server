@@ -5,12 +5,6 @@ extend type Query {
     organisationId: ID!
   ): User
 
-  users (
-    organisationId: ID
-    limit: Int
-    offset: Int
-  ): [User!]
-
   searchUsers (
     emails: [String]!
     limit: Int
