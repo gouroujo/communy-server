@@ -12,7 +12,10 @@ module.exports = function (req, res) {
   models.User.findOne({ email })
   .then(user => {
     if (!user) return res.status(404).send('USER NOT FOUND');
-    return JSON.stringify({
+    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+      throw new Error('No pubsub topic defined to send reset email. message not send')
+    }
+    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
       token: {
         id: user._id
       },
@@ -21,13 +24,7 @@ module.exports = function (req, res) {
         email: user.email,
       },
       subject: 'reset',
-    })
-  })
-  .then(data => {
-    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      throw new Error('No pubsub topic defined to send reset email. message not send')
-    }
-    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
+    });
   })
   .then(() => {
     return res.sendStatus(200);

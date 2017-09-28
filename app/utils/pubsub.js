@@ -19,12 +19,15 @@ module.exports = {
         return topic.publisher()
       })
       .then(publisher => {
-        return publisher.publish(data)
+        return publisher.publish(Buffer.from(JSON.stringify(data)))
       })
       .then(results => {
         const messageId = results[0];
         console.log(`Message ${messageId} published.`);
         return messageId;
+      })
+      .catch(e => {
+        console.log(e)
       })
   }
 }

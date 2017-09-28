@@ -34,9 +34,14 @@ extend type Mutation {
     id: ID!
   ) : Organisation!
 
-  addUserToOrganisation(
+  confirmUserToOrganisation (
     id: ID!
-    input: AddUserToOrganisationInput!
+    input: ConfirmUserOrganisationInput!
+  ): Organisation!
+
+  addUsersToOrganisation(
+    id: ID!
+    input: AddUsersToOrganisationInput!
   ): Organisation!
 
   removeUserFromOrganisation (
@@ -110,10 +115,12 @@ input OrganisationInput {
   cover: String
 }
 
-input AddUserToOrganisationInput {
-  email: String
-  userId: ID
-  emails: [String!]
+input ConfirmUserOrganisationInput {
+  userId: ID!
+}
+
+input AddUsersToOrganisationInput {
+  users: [OrganisationUserInput!]!
 }
 
 input RemoveUserFromOrganisationInput {

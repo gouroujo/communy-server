@@ -25,7 +25,7 @@ module.exports = function(req, res) {
   })
   .then(([u , o]) => {
     return Promise.all([
-      Promise.resolve(JSON.stringify({
+      Promise.resolve({
         token: {
           id: u._id,
           organisationId: o._id
@@ -40,7 +40,7 @@ module.exports = function(req, res) {
           prefix: organisation.prefix,
         },
         subject: 'join'
-      })),
+      }),
 
       ((organisation.logo) ? cloudinary.upload(organisation.logo, {
         timestamp: Date.now(),
@@ -72,7 +72,7 @@ module.exports = function(req, res) {
       console.log(data);
       throw new Error('No pubsub topic defined to send reset email. message not send')
     }
-    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
+    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), data);
   })
   .then(() => {
     return res.sendStatus(200);
