@@ -2,6 +2,7 @@ const { omit, difference } = require('lodash');
 const moment = require('moment');
 const { mongoose, models } = require('../db');
 const getFieldNames = require('../utils/getFields');
+const geocoder = require('../utils/geocoder');
 
 module.exports = {
 
@@ -133,33 +134,38 @@ module.exports = {
   },
   Mutation: {
 
-    createEvent(parent, { input, organisationId }, { currentUser }) {
+    async createEvent(parent, { input, organisationId }, { currentUser, language }) {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${organisationId}:event_create`)) return new Error('Forbidden');
 
-      return models.Organisation.findById(organisationId, 'title logo').then(organisation => {
-        if (!organisation) return new Error('organisation not found');
-        return Promise.all([
-          models.Event.create(Object.assign(input, { organisation })),
-          organisation.update({ $inc: { nevents: 1 }})
-        ])
-        .then(([ event ]) => {
-          return event
-        })
-      });
+      const [ organisation, address ] = await Promise.all([
+        models.Organisation.findById(organisationId, 'title'),
+        (input.address ? geocoder(input.address, language) : Promise.resolve())
+      ])
+
+      if (!organisation) return new Error('organisation not found');
+
+      const [ event ] = await Promise.all([
+        models.Event.create(Object.assign(input, { organisation, address: Object.assign({}, address, input.address) })),
+        organisation.update({ $inc: { nevents: 1 }})
+      ])
+
+      return event
     },
 
-    editEvent(parent, { id, input }, { currentUser }) {
+    async editEvent(parent, { id, input }, { currentUser, language }) {
       if (!currentUser) return new Error('Unauthorized');
+      const event = models.Event.findById(id)
 
-      return models.Event.findById(id)
-        .then(event => {
-          if (!event) return new Error('Not found');
-          if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
-          if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_edit`))return new Error('Forbidden');
+      if (!event) return new Error('Not found');
+      if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
+      if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_edit`))return new Error('Forbidden');
+      if (input.address) {
+        const address = geocoder(input.address, language)
+        return Object.assign(event, input, { address: Object.assign({}, address, input.address) }).save();
+      }
+      return Object.assign(event, input).save();
 
-          return Object.assign(event, input).save();
-        })
     },
 
     deleteEvent(parent, { id }, { currentUser }) {

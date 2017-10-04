@@ -74,6 +74,7 @@ module.exports = function (request, result) {
           opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
           currentUser: user,
           loaders,
+          language: req.acceptsLanguages(['fr', 'en'])
         }
       }
     })(request, result)

@@ -40,6 +40,7 @@ type Event {
   id: ID!
   title: String!
   description: String
+  address: Address
   startTime: DateTime!
   endTime: DateTime!
   duration: String!
@@ -66,6 +67,7 @@ type Event {
 input EventInput {
   title: String!
   description: String
+  address: AddressInput
   startTime: DateTime!
   endTime: DateTime!
   allDay: Boolean
