@@ -7,7 +7,17 @@ const OrganisationSchema = new Schema({
   description: String,
   cover: Number,
   logo: Number,
-  secret: { type: Number, default: false, index: true, required: true },
+  categories: {
+    type: [String],
+    index: true,
+  },
+  type: {
+    type: String,
+    enum: ['public', 'private', 'secret'],
+    default: 'private',
+    index: true,
+    required: true
+  },
   nusers: { type: Number, default: 0, required: true },
   nevents: { type: Number, default: 0 , required: true},
   nwt_confirm: { type: Number, default: 0, required: true },

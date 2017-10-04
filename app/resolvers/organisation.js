@@ -186,7 +186,7 @@ module.exports = {
   Query: {
     organisations(_, { limit, offset }) {
       return models.Organisation.find({
-        secret: false
+        type: { "$ne": 'secret' }
       })
       .skip(offset)
       .limit(limit)

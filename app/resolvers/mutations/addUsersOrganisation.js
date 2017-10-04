@@ -49,7 +49,6 @@ module.exports = function (parent, { id, input }, { currentUser }) {
             organisations: {
               _id: organisation._id,
               title: organisation.title,
-              logo: organisation.logo,
               confirm: true,
               role: orgStatus.MEMBER,
             }
@@ -86,10 +85,8 @@ module.exports = function (parent, { id, input }, { currentUser }) {
                 "user._id": user._id,
                 "user.email": user.email,
                 "user.fullname": user.fullname,
-                "user.avatar": user.avatar,
                 "organisation._id": organisation._id,
                 "organisation.title": organisation.title,
-                "organisation.logo": organisation.logo,
                 createdAt: date,
               }
             },

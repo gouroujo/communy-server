@@ -20,7 +20,12 @@ module.exports = function(req, res) {
   .then(u => {
     return Promise.all([
       Promise.resolve(u),
-      createOrganisation(null, { input: organisation }, { currentUser: u })
+      createOrganisation(null, { input: {
+        title: organisation.title,
+        description: organisation.description,
+        type: organisation.type,
+        categories: organisation.categories
+      } }, { currentUser: u })
     ])
   })
   .then(([u , o]) => {

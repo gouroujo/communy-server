@@ -21,7 +21,6 @@ module.exports = function (parent, { input }, { currentUser }) {
           _id: currentUser._id,
           fullname: currentUser.fullname,
           email: currentUser.email,
-          avatar: currentUser.avatar,
         },
         organisation: organisation.toObject(),
         ack: true,

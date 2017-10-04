@@ -59,7 +59,8 @@ type Organisation {
   id: ID!
   title: String
   description: String
-  secret: Boolean
+  type: String
+  categories: [String!]
   logo(
     width: Int
     height: Int
@@ -110,7 +111,8 @@ type Organisation {
 input OrganisationInput {
   title: String
   description: String
-  secret: Boolean
+  type: String
+  categories: [String!]
   logo: Int
   cover: Int
 }

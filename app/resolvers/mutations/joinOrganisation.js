@@ -1,4 +1,5 @@
 const { models } = require('../../db');
+const { orgStatus } = require('../../dict');
 
 module.exports = function(parent, { id }, { currentUser }) {
   const userOrg = currentUser.organisations.id(id)
@@ -47,7 +48,7 @@ module.exports = function(parent, { id }, { currentUser }) {
   return models.Organisation.findById(id)
     .then(organisation => {
       if (!organisation) return new Error('Organisation Not Found');
-      if (organisation.private) return new Error('Forbidden');
+      if (organisation.type === 'secret') return new Error('Forbidden');
 
       return Promise.all([
         Promise.resolve(organisation),
@@ -56,9 +57,7 @@ module.exports = function(parent, { id }, { currentUser }) {
             _id: id,
           },
           {
-            "$inc": {
-              nwt_confirm: 1,
-            }
+            "$inc": (organisation.type === 'public') ? {nusers: 1} : {nwt_confirm: 1}
           }
         ),
         models.User.updateOne(
@@ -67,7 +66,14 @@ module.exports = function(parent, { id }, { currentUser }) {
           },
           {
             $push: {
-              organisations: Object.assign({}, organisation.toObject(), { ack: true, confirm: false })
+              organisations: Object.assign(
+                {},
+                organisation.toObject(),
+                {
+                  ack: true,
+                  confirm: (organisation.type === 'public'),
+                  role: (organisation.type === 'public') ? orgStatus.MEMBER : null
+                })
             },
           }
         ),
@@ -83,10 +89,10 @@ module.exports = function(parent, { id }, { currentUser }) {
                 _id: currentUser._id,
                 fullname: currentUser.fullname,
                 email: currentUser.email,
-                avatar: currentUser.avatar,
               },
               "ack": true,
-              "confirm": false,
+              "confirm": (organisation.type === 'public'),
+              "role": (organisation.type === 'public') ? orgStatus.MEMBER : null
             }
           },
           { upsert: true }
