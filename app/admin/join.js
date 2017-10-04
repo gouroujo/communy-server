@@ -50,25 +50,17 @@ module.exports = function(req, res) {
       ((organisation.logo) ? cloudinary.upload(organisation.logo, {
         timestamp: Date.now(),
         public_id: `organisations/${o._id}/logo`,
-        unique_filename: false,
-        discard_original_filename: true,
         tags: `logo,${o._id},organisation`,
-        format: 'jpg',
         resource_type: 'image',
-        eager: ['logoT'],
-        eager_async: true,
+        upload_preset: 'logo'
       }) : Promise.resolve()),
 
       ((organisation.cover) ? cloudinary.upload(organisation.cover, {
         timestamp: Date.now(),
         public_id: `organisations/${o._id}/cover`,
-        unique_filename: false,
-        discard_original_filename: true,
         tags: `cover,${o._id},organisation`,
-        format: 'jpg',
         resource_type: 'image',
-        eager: ['coverT'],
-        eager_async: true,
+        upload_preset: 'cover'
       }) : Promise.resolve())
     ])
   })
