@@ -32,6 +32,7 @@ type User {
   birthplace: String
   phone1: String
   phone2: String
+  hasCredentials: Boolean!
   answer (eventId: ID): EventAnswer
 
   organisations (
@@ -64,8 +65,10 @@ type User {
 input UserInput {
   firstname: String
   lastname: String
-  email: String!
+  email: String
   password: String
+  facebookId: String
+  facebookAccessToken: String
   birthday: Date
   birthplace: String
   phone1: String

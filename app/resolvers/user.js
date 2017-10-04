@@ -2,11 +2,16 @@ const { omit, difference } = require('lodash');
 const { models } = require('../db');
 // const memcached = require('../memcached');
 const getFieldNames = require('../utils/getFields');
+const linkFacebook = require('../utils/linkFacebook');
 
 module.exports = {
   User: {
     id(user) {
       return user._id || user.id;
+    },
+
+    hasCredentials(user) {
+      return !!(user.password || user.facebookId)
     },
 
     fullname(user) {
@@ -90,25 +95,31 @@ module.exports = {
   },
 
   Mutation: {
-    editUser(parent, { id, input }, { currentUser }) {
+    async editUser(parent, { id, input }, { currentUser }) {
       if (!currentUser) return new Error('Unauthorized');
       // TODO: id is not used at the moment
 
-      currentUser.set(input);
+      if (input.facebookAccessToken && input.facebookId && input.facebookId !== currentUser.facebookId) {
+        await linkFacebook(currentUser, {
+          facebookId: input.facebookId,
+          facebookAccessToken: input.facebookAccessToken
+        })
+      }
+      currentUser.set(omit(input, ['facebookId']));
       return Promise.all([
         currentUser.save(),
         (
-          input.email === currentUser.email &&
-          input.firstname === currentUser.firstname &&
-          input.lastname === currentUser.lastname
+          (!input.email || input.email === currentUser.email) &&
+          (!input.firstname || input.firstname === currentUser.firstname) &&
+          (!input.lastname || input.lastname === currentUser.lastname)
         ) ? Promise.resolve() : (
           models.Registration.updateMany(
             {
-              "user._id": user._id
+              "user._id": currentUser._id
             },
             {
-              "user.email": user.email,
-              "user.fullname": user.fullname
+              "user.email": currentUser.email,
+              "user.fullname": currentUser.fullname
             }
           )
         )
