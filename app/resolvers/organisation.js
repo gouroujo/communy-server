@@ -17,13 +17,14 @@ module.exports = {
       if (!organisation._id) return null;
       return cloudinary.url(`organisations/${organisation._id}/logo.jpg`,{
         gravity: "center",
-        height: height ? Math.min(height, 300) : 120,
+        height: height ? Math.min(height, 300) : 150,
         radius,
-        width: width ? Math.min(width, 300) : 120,
-        crop: 'thumb',
+        width: width ? Math.min(width, 300) : 150,
+        crop: 'fit',
         default_image: 'logo',
         sign_url: true,
         secure: true,
+        version: organisation.logo ? organisation.logo : null
       })
     },
 
@@ -33,11 +34,12 @@ module.exports = {
         gravity: "center",
         height: height ? Math.min(height, 800) : 300,
         radius,
-        width: width ? Math.min(width, 1000) : 800,
+        width: width ? Math.min(width, 1000) : 840,
         crop: 'fill',
         default_image: 'cover.jpg',
         sign_url: true,
         secure: true,
+        version: organisation.cover ? organisation.cover : null
       })
     },
 
@@ -153,11 +155,8 @@ module.exports = {
         public_id: `organisations/${organisation._id}/logo`,
         overwrite: true,
         invalidate: true,
-        return_delete_token: true,
-        discard_original_filename: true,
         tags: `logo,${organisation._id},organisation`,
-        format: 'jpg',
-        resource_type: 'image',
+        upload_preset: 'logo'
       };
 
       return JSON.stringify(Object.assign({}, options, {
@@ -174,11 +173,8 @@ module.exports = {
         public_id: `organisations/${organisation._id}/cover`,
         overwrite: true,
         invalidate: true,
-        return_delete_token: true,
-        discard_original_filename: true,
         tags: `cover,${organisation._id},organisation`,
-        format: 'jpg',
-        resource_type: 'image',
+        upload_preset: 'cover'
       };
 
       return JSON.stringify(Object.assign({}, options, {

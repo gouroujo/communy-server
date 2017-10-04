@@ -20,7 +20,6 @@ const RegistrationSchema = new Schema({
       lowercase: true,
       trim: true,
     },
-    avatar: String,
   },
   organisation: {
     _id: {
@@ -29,7 +28,6 @@ const RegistrationSchema = new Schema({
       required: true,
     },
     title:  { type: String, required: true },
-    logo: String,
   },
   confirm: { type: Boolean, default: false, required: true },
   ack: { type: Boolean, default: false, required: true },

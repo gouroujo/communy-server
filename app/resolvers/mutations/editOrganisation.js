@@ -10,7 +10,6 @@ module.exports = function (parent, { id, input }, { currentUser }) {
       "organisation._id": id
     }, {
       $set: {
-        "organisation.logo": input.logo,
         "organisation.title": input.title,
       }
     }),
@@ -20,7 +19,6 @@ module.exports = function (parent, { id, input }, { currentUser }) {
       }
     }, {
       $set: {
-        "organisations.$.logo": input.logo,
         "organisations.$.title": input.title,
       }
     }),

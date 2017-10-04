@@ -5,7 +5,6 @@ const SubUserSchema = new Schema({
   firstname: String,
   lastname: String,
   email: String,
-  avatar: String,
   _id: {
     type: Schema.Types.ObjectId,
     ref: 'User',

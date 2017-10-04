@@ -108,11 +108,11 @@ type Organisation {
 }
 
 input OrganisationInput {
-  title: String!
+  title: String
   description: String
-  secret: Boolean!
-  logo: String
-  cover: String
+  secret: Boolean
+  logo: Int
+  cover: Int
 }
 
 input ConfirmUserOrganisationInput {
