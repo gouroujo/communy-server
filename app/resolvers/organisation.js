@@ -88,7 +88,7 @@ module.exports = {
     registration(organisation, { userId }, { currentUser }, info) {
       if (
         !currentUser ||
-        userId && userId !== currentUser._id && !currentUser.permissions.check(`organisation:${organisation._id}:user_view`)
+        (userId && userId !== currentUser._id && !currentUser.permissions.check(`organisation:${organisation._id}:user_view`))
       ) return null;
 
       const fields = difference(getFieldNames(info), [
