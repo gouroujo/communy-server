@@ -50,7 +50,6 @@ const UserSchema = new Schema({
   lastname: String,
   password: {
     type: String,
-    select: false
   },
   salt: {
     type: String,
