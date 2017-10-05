@@ -86,7 +86,10 @@ module.exports = {
     },
 
     registration(organisation, { userId }, { currentUser }, info) {
-      if (!currentUser) return new Error('Unauthorized');
+      if (
+        !currentUser ||
+        userId && userId !== currentUser._id && !currentUser.permissions.check(`organisation:${organisation._id}:user_view`)
+      ) return null;
 
       const fields = difference(getFieldNames(info), [
         'joined', 'ack', 'confirm', 'role', '__typename'
@@ -115,7 +118,7 @@ module.exports = {
     },
 
     registrations(organisation, { search, role, limit, offset, ack, confirm }, { currentUser }, info) {
-      if (!currentUser) return new Error('Unauthorized');
+      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:user_list`)) return null;
 
       const query = models.Registration.find({
         "organisation._id": organisation._id,
@@ -134,8 +137,7 @@ module.exports = {
     },
 
     events(organisation, { after, before, limit, offset }, { currentUser }, info) {
-      if (!currentUser) return new Error('Unauthorized');
-      if (!currentUser.permissions.check(`organisation:${organisation._id}:event_list`)) return new Error('Forbidden');
+      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:event_list`)) return null;
 
       const query = models.Event.find({
         "organisation._id": organisation._id
@@ -146,8 +148,8 @@ module.exports = {
       return query.limit(limit).skip(offset).lean().exec()
     },
 
-    logoUploadOpts(organisation) {
-      if(!organisation || !organisation._id) return null;
+    logoUploadOpts(organisation, params, { currentUser }) {
+      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:upload_logo`)) return null;
 
       const options = {
         api_key: config.get('CLOUDINARY_KEY'),
@@ -164,8 +166,9 @@ module.exports = {
       }));
     },
 
-    coverUploadOpts(organisation) {
-      if(!organisation || !organisation._id) return null;
+    coverUploadOpts(organisation, params, { currentUser }) {
+      if (!currentUser) return null;
+      if (!currentUser.permissions.check(`organisation:${organisation._id}:upload_cover`)) return null;
 
       const options = {
         api_key: config.get('CLOUDINARY_KEY'),

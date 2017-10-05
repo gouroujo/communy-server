@@ -1,7 +1,9 @@
 const mb_auth = [
   'event_list',
   'event_view',
-  'event_answer'
+  'event_answer',
+  'user_list',
+  'user_view'
 ];
 const mod_auth = mb_auth.concat([
   'event_delete',
