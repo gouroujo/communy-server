@@ -27,10 +27,10 @@ module.exports = function (address, language) {
       city: result.components.city,
       country: result.components.countr,
       country_code: result.components.country_code,
-      location: {
+      location: (result.geometry.lng && result.geometry.lat) ? ({
         type: "Point",
         coordinates: [result.geometry.lng, result.geometry.lat],
-      },
+      }) : null,
       fulltext: result.formatted,
     }
   })

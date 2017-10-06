@@ -1,5 +1,10 @@
 const { Schema } = require('mongoose');
 
+const LocationSchema = new Schema({
+  type: String,
+  coordinates: [String] // [<longitude>, <latitude>]
+}, { typeKey: '$type' })
+
 const AddressSchema = new Schema({
   title:  String,
   fulltext: String,
@@ -9,10 +14,10 @@ const AddressSchema = new Schema({
   country: String,
   country_code: String,
   location: {
-    type: String,
-    coordinates: [Number], // [<longitude>, <latitude>]
+    type: LocationSchema,
+    default: null,
   },
-}, { typeKey: '$type' });
+});
 
 AddressSchema.index({ location: '2dsphere' }, { background: true });
 module.exports = AddressSchema;
