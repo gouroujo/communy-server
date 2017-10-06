@@ -42,8 +42,12 @@ module.exports = function (req, res) {
         if (users.length === 1) {
           const [ user ] = users;
 
-          if (user.facebookId === fbuser.id) {
-            return user.getToken()
+          if (
+            (user.facebookId === fbuser.id) ||
+            (!user.facebookId && !user.password && user.email === fbuser.email)
+          ) {
+            return user.facebookId ? Promise.resolve() : user.update({ facebookId: fbuser.id})
+              .then(() => user.getToken())
               .then(token => {
                 return res.append('Authorization', token).sendStatus(200);
               });
