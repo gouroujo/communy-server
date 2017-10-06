@@ -2,7 +2,7 @@ const models = require('../db').models;
 
 module.exports = function (req, res) {
   const { email, password } = req.body;
-  return models.User.findOne({ email }, '+password +salt').then(user => {
+  return models.User.findOne({ email }, 'password salt').then(user => {
     if(user) {
       return user.comparePassword(password).then(auth => {
         if(!auth) return res.status(401).send('BAD CREDENTIALS');
