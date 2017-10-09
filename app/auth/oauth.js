@@ -46,11 +46,11 @@ module.exports = function (req, res) {
             (user.facebookId === fbuser.id) ||
             (!user.facebookId && !user.password && user.email === fbuser.email)
           ) {
-            return user.facebookId ? Promise.resolve() : user.update({ facebookId: fbuser.id})
+            return (user.facebookId ? Promise.resolve() : user.update({ facebookId: fbuser.id}))
               .then(() => user.getToken())
               .then(token => {
                 return res.append('Authorization', token).sendStatus(200);
-              });
+              })
           }
 
           if(user.email === fbuser.email) {
