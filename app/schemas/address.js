@@ -2,7 +2,7 @@ const { Schema } = require('mongoose');
 
 const LocationSchema = new Schema({
   type: String,
-  coordinates: [String] // [<longitude>, <latitude>]
+  coordinates: [Number] // [<longitude>, <latitude>]
 }, { typeKey: '$type' })
 
 const AddressSchema = new Schema({
