@@ -1,5 +1,8 @@
 const { get } = require('axios');
 const models = require('../db').models;
+const config = require('../config');
+
+const joinOrganisation = require('../resolvers/mutations/joinOrganisation');
 
 module.exports = function (req, res) {
   const {
@@ -30,11 +33,16 @@ module.exports = function (req, res) {
             confirm: true,
             userCreated: true,
           })
-          .then((user, err) => {
-            if(err) return res.sendStatus(500);
-            return user.getToken().then(token => {
-              return res.append('Authorization', token).sendStatus(201);
-            });
+          .then(user => {
+            return (config.get('DEFAULT_ORG_ID') ? (
+              joinOrganisation(null, { id: config.get('DEFAULT_ORG_ID')}, { currentUser: user })
+            ) : Promise.resolve())
+            .catch(e => console.log(e))
+            .then(() => user)
+          })
+          .then(user => user.getToken())
+          .then(token => {
+            return res.append('Authorization', token).sendStatus(201);
           })
         }
 

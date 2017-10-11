@@ -22,6 +22,7 @@ nconf
     'OPTICS_API_KEY',
     'OPENCAGE_KEY',
     'ADMIN_PASSWORD',
+    'DEFAULT_ORG_ID',
     'NODE_ENV',
     'PORT'
   ])
