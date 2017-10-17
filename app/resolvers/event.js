@@ -138,15 +138,21 @@ module.exports = {
       if (!currentUser) return new Error('Unauthorized');
       if (!currentUser.permissions.check(`organisation:${organisationId}:event_create`)) return new Error('Forbidden');
 
-      const [ organisation, address ] = await Promise.all([
-        models.Organisation.findById(organisationId, 'title'),
-        (input.address ? geocoder(input.address, language) : Promise.resolve())
-      ])
-
+      const organisation = await models.Organisation.findById(organisationId, 'title')
       if (!organisation) return new Error('organisation not found');
 
+      let newEvent = Object.assign(input, { organisation })
+      if (input.address) {
+        try {
+          const address = await geocoder(input.address, language)
+          newEvent.address = Object.assign({}, address, input.address)
+        } catch (e) {
+          console.log(e)
+        }
+      }
+
       const [ event ] = await Promise.all([
-        models.Event.create(Object.assign(input, { organisation, address: Object.assign({}, address, input.address) })),
+        models.Event.create(newEvent),
         organisation.update({ $inc: { nevents: 1 }})
       ])
 
@@ -155,14 +161,18 @@ module.exports = {
 
     async editEvent(parent, { id, input }, { currentUser, language }) {
       if (!currentUser) return new Error('Unauthorized');
-      const event = models.Event.findById(id)
+      const event = await models.Event.findById(id)
 
       if (!event) return new Error('Not found');
       if (!event.organisation || !event.organisation._id) return new Error('Data Corrupted');
       if (!currentUser.permissions.check(`organisation:${event.organisation._id}:event_edit`))return new Error('Forbidden');
       if (input.address) {
-        const address = geocoder(input.address, language)
-        return Object.assign(event, input, { address: Object.assign({}, address, input.address) }).save();
+        try {
+          const address = await geocoder(input.address, language)
+          return Object.assign(event, input, { address: Object.assign({}, address, input.address) }).save();
+        } catch (e) {
+          return Object.assign(event, input).save();
+        }
       }
       return Object.assign(event, input).save();
 
