@@ -38,6 +38,8 @@ app.use('/auth/invite', require('./auth/invite'));
 
 app.use('/admin/*', bodyParser.json());
 app.use('/admin/createorg', require('./admin/join'));
+app.use('/admin/getorgtoken', require('./admin/create'));
+
 
 connection.on('error', console.error.bind(console, 'connection error:'));
 connection.once('open', function() {
