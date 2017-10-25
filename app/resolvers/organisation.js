@@ -206,6 +206,7 @@ module.exports = {
     editOrganisation: require('./mutations/editOrganisation'),
     deleteOrganisation: require('./mutations/deleteOrganisation'),
     joinOrganisation: require('./mutations/joinOrganisation'),
+    leaveOrganisation: require('./mutations/leaveOrganisation'),
     confirmUserToOrganisation: require('./mutations/confirmUserOrganisation'),
     addUsersToOrganisation: require('./mutations/addUsersOrganisation'),
     removeUserFromOrganisation: require('./mutations/removeUserOrganisation'),

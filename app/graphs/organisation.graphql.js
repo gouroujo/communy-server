@@ -34,6 +34,10 @@ extend type Mutation {
     id: ID!
   ) : Organisation!
 
+  leaveOrganisation (
+    id: ID!
+  ) : Organisation!
+
   confirmUserToOrganisation (
     id: ID!
     input: ConfirmUserOrganisationInput!
