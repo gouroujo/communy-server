@@ -90,7 +90,7 @@ module.exports = {
       ]);
       if (fields.length === 0) {
         return {
-          id: event.organisation._id,
+          _id: event.organisation._id,
           title: event.organisation.title,
           logo: event.organisation.logo,
         }

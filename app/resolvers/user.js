@@ -14,27 +14,12 @@ module.exports = {
       return !!(user.password || user.facebookId)
     },
 
-    fullname(user) {
-      if (user.fullname) return user.fullname;
-      if (!user.firstname && !user.lastname) return user.email;
-      return `${user.firstname ? user.firstname : ''} ${user.lastname ? user.lastname : ''}`;
+    fullname(user, args, { getField }) {
+      return getField('fullname', user, 'User');
     },
 
-    organisations(user, args, ctx, info) {
-      const fields = difference(getFieldNames(info), [
-        'id', 'title', 'logo', 'role', 'ack','confirm', 'registration', '__typename'
-      ])
-      if (fields.length === 0) {
-        return user.organisations;
-      }
-
-      return models.Organisation.find({
-        _id: { $in: user.organisations.map(org => org._id) }
-      }).then(organisations => {
-        return organisations.map((organisation) => {
-          return Object.assign({}, user.organisations.id(organisation._id), organisation.toObject())
-        });
-      })
+    registrations(user, { role, limit, offset }, { getField }) {
+      return getField('registrations', user, 'User');
     },
 
     answer(user, { eventId }, { currentUser, loaders }) {
@@ -64,7 +49,23 @@ module.exports = {
         );
       }
       return query.sort('endTime').limit(limit).skip(offset).lean().exec();
-    }
+    },
+
+    messages(user, { limit, offset, organisationId, read }) {
+      const query = models.Message.find({});
+      if (typeof read !== 'undefined') query.where('readAt').ne(null)
+      if (organisationId) {
+        query.where('organisation._id').equals(organisationId);
+      }
+      return query.sort('sendAt').limit(limit).skip(offset).lean().exec();
+    },
+
+    nunreadMessage(user) {
+      return models.Message.count({
+        "to._id": user.id,
+        readAt: null
+      })
+    },
   },
 
   Query: {
@@ -72,19 +73,19 @@ module.exports = {
       if (!currentUser) return new Error('Unauthorized');
       return loaders.User.load(id);
     },
-    searchUsers(parent, { emails, limit, offset }, { currentUser }) {
+    users(_, { organisationId, search, limit, offset }, { currentUser }) {
+      const searchRegEx = new RegExp(search,'i');
       return models.User.find({
-        email: { $in: emails }
+        $or: [
+          { firstname: { $regex: searchRegEx } },
+          { lastname: { $regex: searchRegEx } },
+          { email: { $regex: searchRegEx } },
+        ]
       })
       .limit(limit)
       .skip(offset)
       .lean()
       .exec()
-      .then(users => {
-        return emails.map(email => {
-          return users.find(u => u.email === email) || { email }
-        });
-      });
     },
 
     me(parent, args, { currentUser, loaders }) {

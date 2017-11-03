@@ -8,8 +8,8 @@ module.exports = function (parent, { id, input }, { currentUser }) {
     models.User.update(
       {
         _id: input.userId,
-        organisations: {
-          $elemMatch: { _id: id }
+        registrations: {
+          $elemMatch: { "organisation._id": id }
         }
       }, {
         "organisations.$.role": input.role,

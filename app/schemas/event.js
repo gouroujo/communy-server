@@ -27,6 +27,7 @@ const EventSchema = new Schema({
     },
     title: String,
   },
+  demo: Boolean,
   nusers: { type: Number, default: 0 },
   yes: [SubUserSchema],
   mb: [SubUserSchema],

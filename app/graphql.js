@@ -17,6 +17,8 @@ const executableSchema = makeExecutableSchema({
     require('./graphs/organisation.graphql'),
     require('./graphs/user.graphql'),
     require('./graphs/registration.graphql'),
+    require('./graphs/mailing.graphql'),
+    require('./graphs/message.graphql'),
   ],
   resolvers: require('./resolvers'),
 });
@@ -25,16 +27,29 @@ if (config.get('OPTICS_API_KEY')) {
   OpticsAgent.instrumentSchema(executableSchema)
 }
 
+function createLoaderFor(model, options) {
+  return new DataLoader(ids => {
+    const castedIds = ids
+      .map(id => mongoose.Types.ObjectId(id))
+    return model.aggregate([
+      {$match: {_id: {$in: castedIds}}},
+      {$addFields: {"__order": {$indexOfArray: [castedIds, "$_id" ]}}},
+      {$sort: {"__order": 1}}
+    ])
+  }, options)
+}
+
 function createLoaders() {
   return {
-    Event: new DataLoader(ids => {
-      const castedIds = ids.map(id => mongoose.Types.ObjectId(id))
-      return models.Event.aggregate([
-        {$match: {_id: {$in: castedIds}}},
-        {$addFields: {"__order": {$indexOfArray: [castedIds, "$_id" ]}}},
-        {$sort: {"__order": 1}}
-      ])
-    }),
+    Event: createLoaderFor(models.Event),
+    Organisation: createLoaderFor(models.Organisation),
+    Registration: createLoaderFor(models.Registration),
+    RegistrationLink: new DataLoader(([ params ]) => {
+      return models.Registration.findOne(params)
+        .then(registration => Promise.resolve([ registration ]))
+    }, { batch: false, cacheKeyFn: key => String(key["organisation._id"])+':'+String(key["user._id"]) }),
+    Message: createLoaderFor(models.Message),
+    Mailing: createLoaderFor(models.Mailing),
     User: new DataLoader(id => {
       return models.User.findById(id)
         .then(user => {
@@ -74,7 +89,16 @@ module.exports = function (request, result) {
           opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
           currentUser: user,
           loaders,
-          language: req.acceptsLanguages(['fr', 'en'])
+          language: req.acceptsLanguages(['fr', 'en']),
+          getField: (fieldName, parent, loader) => {
+            if (parent[fieldName]) return Promise.resolve(parent[fieldName]);
+            return loaders[loader].load(parent._id)
+              .then(loaded => loaded[fieldName])
+              .catch(e => {
+                console.log(e);
+                return null
+              })
+          }
         }
       }
     })(request, result)

@@ -1,15 +1,16 @@
 const User = /* GraphQL */`
 extend type Query {
+  users (
+    organisationId: ID!
+    search: String
+    limit: Int
+    offset: Int
+  ): [User!]
+
   user (
     id: ID!
     organisationId: ID!
   ): User
-
-  searchUsers (
-    emails: [String]!
-    limit: Int
-    offset: Int
-  ): [User!]
 
   me: User
 }
@@ -35,11 +36,11 @@ type User {
   hasCredentials: Boolean!
   answer (eventId: ID): EventAnswer
 
-  organisations (
+  registrations (
     role: OrganisationRole
     limit: Int
     offset: Int
-  ): [Organisation!]
+  ): [Registration!]!
 
   norganisations (
     role: OrganisationRole
@@ -60,6 +61,13 @@ type User {
     before: Date
     answer: EventAnswer
   ): Int!
+
+  messages (
+    read: Boolean
+    limit: Int
+    offset: Int
+  ): [Message!]
+  nunreadMessage: Int!
 }
 
 input UserInput {

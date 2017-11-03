@@ -5,7 +5,7 @@ const { models } = require('../../db');
 const { orgStatus } = require('../../dict');
 const pubsub = require('../../utils/pubsub');
 
-module.exports = function (parent, { id, input }, { currentUser }) {
+module.exports = function (parent, { id, input }, { currentUser, loaders }) {
   if (!currentUser) return new Error('Unauthorized');
   if (!currentUser.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
 
@@ -13,14 +13,14 @@ module.exports = function (parent, { id, input }, { currentUser }) {
     models.User.findOneAndUpdate(
       {
         _id: input.userId,
-        organisations: {
-          $elemMatch: { _id: id, ack: true, role: null }
+        registrations: {
+          $elemMatch: { "organisation._id": id, ack: true, role: null }
         }
       },
       {
         $set: {
-          "organisations.$.confirm": true,
-          "organisations.$.role": orgStatus.MEMBER
+          "registrations.$.confirm": true,
+          "registrations.$.role": orgStatus.MEMBER
         },
         $inc: { norganisations: 1 },
       }
@@ -67,6 +67,7 @@ module.exports = function (parent, { id, input }, { currentUser }) {
         subject: 'confirm_org',
       })
       .then(() => {
+        loaders.Organisation.prime(organisation._id, organisation);
         return organisation
       })
     })

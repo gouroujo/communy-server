@@ -31,10 +31,13 @@ const generateSalt = () => new Promise((resolve, reject) => {
   });
 });
 
-
-
 const SubOrganisationSchema = new Schema({
   title: { type: String, required: true },
+  _id: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
+}, { _id: false });
+
+const SubRegistrationSchema = new Schema({
+  organisation: SubOrganisationSchema,
   role: {
     type: String,
     enum: values(orgStatus).concat([null]),
@@ -42,8 +45,7 @@ const SubOrganisationSchema = new Schema({
   },
   ack: { type: Boolean, default: false },
   confirm: { type: Boolean, default: false },
-  _id: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
-});
+}, { _id: false });
 
 const UserSchema = new Schema({
   firstname:  String,
@@ -59,6 +61,7 @@ const UserSchema = new Schema({
     type: String,
     index: true,
   },
+  demo: Boolean,
   confirm: Boolean,
   userCreated: { type: Boolean, default: false },
   avatar:   String,
@@ -72,8 +75,8 @@ const UserSchema = new Schema({
     sparse: true,
     unique: true,
   },
-  organisations: {
-    type: [SubOrganisationSchema],
+  registrations: {
+    type: [SubRegistrationSchema],
     default: [],
   },
   norganisations: { type: Number, default: 0 },
@@ -83,8 +86,7 @@ const UserSchema = new Schema({
 
 UserSchema.virtual('fullname')
   .get(function() {
-    if (!this.firstname && !this.lastname) return this.email;
-    return `${this.firstname ? this.firstname : ''} ${this.lastname ? this.lastname : ''}`;
+    return (this.firstname || this.lastname) ? `${this.firstname || ''} ${this.lastname || ''}` : this.email;
   })
   .set(function(v) {
     this.firstname = v.substr(0, v.indexOf(' '));
@@ -95,10 +97,10 @@ UserSchema.virtual('permissions')
   .get(function() {
     const permissions = shiroTrie.new();
 
-    if (this.organisations) {
-      permissions.add(this.organisations.reduce((p, o) => {
-        if (!o.role || !o._id) return p;
-        return p.concat(orgPermissions[o.role].map(a => `organisation:${o._id}:${a}`));
+    if (this.registrations) {
+      permissions.add(this.registrations.reduce((p, r) => {
+        if (!r.role || !r.organisation._id) return p;
+        return p.concat(orgPermissions[r.role].map(a => `organisation:${r.organisation._id}:${a}`));
       }, []));
     }
     return permissions;

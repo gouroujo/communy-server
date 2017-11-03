@@ -4,7 +4,7 @@ const config = require('../../config');
 
 const pubsub = require('../../utils/pubsub');
 
-module.exports = function (parent, { id, input }, { currentUser }) {
+module.exports = function (parent, { id, input }, { currentUser, loaders }) {
   if (!currentUser) return new Error('Unauthorized');
   if (!currentUser.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
   const date = new Date();
@@ -39,16 +39,18 @@ module.exports = function (parent, { id, input }, { currentUser }) {
         // 4a - Add the users with no pending request
         models.User.updateMany({
           _id: { $in: users.map(u => u._id) },
-          organisations: {
+          registrations: {
             $not: {
-              $elemMatch: { _id: organisation._id }
+              $elemMatch: { "organisation._id": organisation._id }
             }
           }
         }, {
           $push: {
-            organisations: {
-              _id: organisation._id,
-              title: organisation.title,
+            registrations: {
+              organisation: {
+                _id: organisation._id,
+                title: organisation.title,
+              },
               confirm: true,
               role: orgStatus.MEMBER,
             }
@@ -57,13 +59,13 @@ module.exports = function (parent, { id, input }, { currentUser }) {
         // 4b - Add the users who have already request to join
         models.User.updateMany({
           _id: { $in: users.map(u => u._id) },
-          organisations: {
-            $elemMatch: { _id: organisation._id, ack: true, role: null }
+          registrations: {
+            $elemMatch: { "organisation._id": organisation._id, ack: true, role: null }
           }
         }, {
           $set: {
-            "organisations.$.confirm": true,
-            "organisations.$.role": orgStatus.MEMBER
+            "registrations.$.confirm": true,
+            "registrations.$.role": orgStatus.MEMBER
           },
           $inc: { norganisations: 1 },
         }),
@@ -83,7 +85,6 @@ module.exports = function (parent, { id, input }, { currentUser }) {
               $setOnInsert: {
                 ack: false,
                 "user._id": user._id,
-                "user.email": user.email,
                 "user.fullname": user.fullname,
                 "organisation._id": organisation._id,
                 "organisation.title": organisation.title,
@@ -135,6 +136,7 @@ module.exports = function (parent, { id, input }, { currentUser }) {
       }))
     ])
     .then(() => {
+      loaders.Organisation.prime(organisation._id, organisation)
       return organisation
     })
   })

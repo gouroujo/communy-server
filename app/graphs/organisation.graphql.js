@@ -1,6 +1,7 @@
+const Mailing = require('./mailing.graphql');
+
 const Organisation = /* GraphQL */`
 extend type Query {
-
   organisations (
     joined: Boolean
     limit: Int
@@ -11,8 +12,6 @@ extend type Query {
   organisation (
     id: ID!
   ): Organisation!
-
-  createOrganisation: Organisation!
 }
 
 extend type Mutation {
@@ -103,13 +102,11 @@ type Organisation {
     after: Date
   ): Int!
 
-  role: OrganisationRole
-  ack: Boolean!
-  confirm: Boolean!
-
   nusers: Int!
   nack: Int!
   nconfirm: Int!
+
+  mailings: [Mailing]
 }
 
 input OrganisationInput {
@@ -140,4 +137,4 @@ input SetRoleInOrganisationInput {
 }
 `;
 
-module.exports = () => [Organisation]
+module.exports = () => [Organisation, Mailing]

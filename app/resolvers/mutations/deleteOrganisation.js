@@ -13,8 +13,8 @@ module.exports = function (parent, { id }, { currentUser }) {
         deleteMany: {
           filter: {
             userCreated: { $ne: true },
-            organisations: {
-              $elemMatch: { _id: id },
+            registrations: {
+              $elemMatch: { "organisation._id": id },
               $size: 1,
             }
           }
@@ -23,7 +23,7 @@ module.exports = function (parent, { id }, { currentUser }) {
       {
         updateMany: {
           filter: {
-            organisations: {
+            registrations: {
               $elemMatch: {
                 $or: [
                   { _id: id, ack: false },
@@ -31,23 +31,23 @@ module.exports = function (parent, { id }, { currentUser }) {
                 ]
               },
             },
-            $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+            $or: [{ "registrations.1": { $exists: true } }, { userCreated: true }],
           },
           update: {
-            $pull: { organisations: { _id: id } },
+            $pull: { registrations: { "organisation._id": id } },
           }
         },
       },
       {
         updateMany: {
           filter: {
-            organisations: {
-              $elemMatch: { _id: id, ack: true, role: { $exists: true, $ne: null } },
+            registrations: {
+              $elemMatch: { "organisation._id": id, ack: true, role: { $exists: true, $ne: null } },
             },
-            $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+            $or: [{ "registrations.1": { $exists: true } }, { userCreated: true }],
           },
           update: {
-            $pull: { organisations: { _id: id } },
+            $pull: { registrations: { "organisation._id": id } },
             $inc: { norganisations: -1 }
           }
         },

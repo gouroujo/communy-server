@@ -18,6 +18,7 @@ const OrganisationSchema = new Schema({
     index: true,
     required: true
   },
+  demo: Boolean,
   nusers: { type: Number, default: 0, required: true },
   nevents: { type: Number, default: 0 , required: true},
   nwt_confirm: { type: Number, default: 0, required: true },

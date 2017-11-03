@@ -8,8 +8,8 @@ module.exports = function (userIds, organisationId) {
           filter: {
             _id: { $in: userIds},
             userCreated: { $ne: true },
-            organisations: {
-                $elemMatch: { _id: organisationId },
+            registrations: {
+                $elemMatch: { "organisation._id": organisationId },
                 $size: 1,
             }
           }
@@ -19,18 +19,18 @@ module.exports = function (userIds, organisationId) {
         updateMany: {
           filter: {
             _id: { $in: userIds},
-            organisations: {
+            registrations: {
               $elemMatch: {
                 $or: [
-                  { _id: organisationId, ack: false },
-                  { _id: organisationId, role: null },
+                  { "organisation._id": organisationId, ack: false },
+                  { "organisation._id": organisationId, role: null },
                 ]
               },
             },
-            $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+            $or: [{ "registrations.1": { $exists: true } }, { userCreated: true }],
           },
           update: {
-            $pull: { organisations: { _id: organisationId } },
+            $pull: { registrations: { "organisation._id": organisationId } },
           }
         },
       },
@@ -38,13 +38,13 @@ module.exports = function (userIds, organisationId) {
         updateMany: {
           filter: {
             _id: { $in: userIds},
-            organisations: {
-              $elemMatch: { _id: organisationId, ack: true, role: { $exists: true, $ne: null } },
+            registrations: {
+              $elemMatch: { "organisation._id": organisationId, ack: true, role: { $exists: true, $ne: null } },
             },
-            $or: [{ "organisations.1": { $exists: true } }, { userCreated: true }],
+            $or: [{ "registrations.1": { $exists: true } }, { userCreated: true }],
           },
           update: {
-            $pull: { organisations: { _id: organisationId } },
+            $pull: { registrations: { "organisation._id": organisationId } },
             $inc: { norganisations: -1 }
           }
         },

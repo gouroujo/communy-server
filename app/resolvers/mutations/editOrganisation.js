@@ -1,6 +1,6 @@
 const { models } = require('../../db');
 
-module.exports = function (parent, { id, input }, { currentUser }) {
+module.exports = function (parent, { id, input }, { currentUser, loaders }) {
   if (!currentUser) return new Error('Unauthorized');
   if (!currentUser.permissions.check(`organisation:${id}:edit`)) return new Error('Forbidden');
 
@@ -14,15 +14,18 @@ module.exports = function (parent, { id, input }, { currentUser }) {
       }
     }),
     models.User.updateMany({
-      "organisations": {
-        $elemMatch: { _id: id }
+      "registrations": {
+        $elemMatch: { "organisation_id": id }
       }
     }, {
       $set: {
-        "organisations.$.title": input.title,
+        "registrations.$.organisation.title": input.title,
       }
     }),
   ])
-  .then(([ organisation ]) => organisation)
+  .then(([ organisation ]) => {
+    loaders.Organisation.prime(organisation._id, organisation);
+    return organisation;
+  })
   .catch(e => console.log(e))
 }

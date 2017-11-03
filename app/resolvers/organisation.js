@@ -1,7 +1,7 @@
 const { find, pick, difference } = require('lodash');
 
 const config = require('../config');
-const { models } = require('../db');
+const { models, mongoose } = require('../db');
 const cloudinary = require('../cloudinary');
 
 const getFieldNames = require('../utils/getFields');
@@ -10,9 +10,13 @@ const signCloudinary = require('../utils/signCloudinary');
 module.exports = {
   Organisation: {
     id(organisation) {
-      return organisation.ref || organisation._id || organisation.id;
+      return organisation._id;
     },
 
+    title(organisation, params, { getField }) {
+      return getField('title', organisation, 'Organisation');
+    },
+    
     logo(organisation, { width, height, radius }) {
       if (!organisation._id) return null;
       return cloudinary.url(`organisations/${organisation._id}/logo.jpg`,{
@@ -43,78 +47,28 @@ module.exports = {
       })
     },
 
-    role(organisation, args, { currentUser }) {
-      if (typeof organisation.role !== 'undefined') return organisation.role
-      return models.Registration.findOne({
-        "user._id": currentUser._id,
-        "organisation._id": organisation._id
-      })
-      .then(r => r ? r.role : null)
-      .catch(e => console.log(e));
+    nusers(organisation, args, { getField }) {
+      return getField('nusers', organisation, 'Organisation');
     },
 
-    ack(organisation, args, { currentUser }) {
-      if (typeof organisation.ack !== 'undefined') return organisation.ack
-      return models.Registration.findOne({
-        "user._id": currentUser._id,
-        "organisation._id": organisation._id
-      })
-      .then(r => r ? r.ack : false)
-      .catch(e => console.log(e));
+    nack(organisation, args, { getField }) {
+      return getField('nwt_ack', organisation, 'Organisation');
     },
 
-    confirm(organisation, args, { currentUser }) {
-      if (typeof organisation.confirm !== 'undefined') return organisation.confirm
-      return models.Registration.findOne({
-        "user._id": currentUser._id,
-        "organisation._id": organisation._id
-      })
-      .then(r => r ? r.confirm : false)
-      .catch(e => console.log(e));
+    nconfirm(organisation, args, { getField }) {
+      return getField('nwt_confirm', organisation, 'Organisation');
     },
 
-    nusers(organisation) {
-      return organisation.nusers;
-    },
-
-    nack(organisation) {
-      return organisation.nwt_ack;
-    },
-
-    nconfirm(organisation) {
-      return organisation.nwt_confirm;
-    },
-
-    registration(organisation, { userId }, { currentUser }, info) {
+    registration(organisation, { userId }, { currentUser, loaders }, info) {
       if (
         !currentUser ||
         (userId && userId !== currentUser._id && !currentUser.permissions.check(`organisation:${organisation._id}:user_view`))
       ) return null;
 
-      const fields = difference(getFieldNames(info), [
-        'joined', 'ack', 'confirm', 'role', '__typename'
-      ])
-      if (fields.length === 0) {
-        return ((userId) ? models.User.findById(userId) : Promise.resolve(currentUser))
-          .then(user => {
-            if (!user.organisations) throw new Error('no organisations for user')
-            const o = find(user.organisations, ['_id', organisation._id]);
-            if (!o) throw new Error('organisation not found for user')
-            return pick(o, ['ack', 'confirm', 'role'])
-          })
-          .catch(() => {
-            return models.Registration.findOne({
-              "organisation._id": organisation._id,
-              "user._id": userId || currentUser._id,
-            })
-          })
-      }
-
-      return models.Registration.findOne({
+      return loaders.RegistrationLink.load({
         "organisation._id": organisation._id,
         "user._id": userId || currentUser._id,
       })
-
     },
 
     registrations(organisation, { search, role, limit, offset, ack, confirm }, { currentUser }, info) {
@@ -146,6 +100,10 @@ module.exports = {
       if (after) query.gte('endTime', after)
       if (before) query.lte('startTime', before)
       return query.limit(limit).skip(offset).lean().exec()
+    },
+
+    mailings(organisation) {
+      return models.Mailing.find({ "organisation._id": organisation._id })
     },
 
     logoUploadOpts(organisation, params, { currentUser }) {
@@ -196,8 +154,9 @@ module.exports = {
       .lean();
     },
 
-    organisation(_, { id }) {
-      return models.Organisation.findById(id).lean()
+    organisation(_, { id }, { loaders }) {
+      if (!mongoose.Types.ObjectId.isValid(id)) throw new Error('Invalid ID');
+      return loaders.Organisation.load(id);
     },
   },
 

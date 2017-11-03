@@ -1,14 +1,16 @@
 const { models } = require('../../db');
 const { orgStatus } = require('../../dict');
 
-module.exports = function(parent, { id }, { currentUser }) {
-  const userOrg = currentUser.organisations.id(id)
+module.exports = function(parent, { id }, { currentUser, loaders }) {
+  const userRegistration = currentUser.registrations.find(r => (
+    String(r.organisation._id) === id
+  ))
 
   // User has already join the organisation and acknowledged
-  if (userOrg && userOrg.ack) return currentUser;
+  if (userRegistration && userRegistration.ack) return currentUser;
 
   // User has not acknowledged
-  if (userOrg && !userOrg.ack) {
+  if (userRegistration && !userRegistration.ack) {
     return Promise.all([
       models.Organisation.findByIdAndUpdate(id,
         {
@@ -18,17 +20,19 @@ module.exports = function(parent, { id }, { currentUser }) {
           }
         }, { new: true }
       ),
-      models.User.updateOne(
+      models.User.findOneAndUpdate(
         {
           "_id": currentUser._id,
-          "organisations._id": id
+          registrations: {
+            $elemMatch: { "organisation._id": id }
+          }
         },
         {
           "$set": {
-            "organisations.$.ack": true,
+            "registrations.$.ack": true,
           },
           $inc: { norganisations: 1 },
-        }
+        }, { new: true }
       ),
       models.Registration.updateOne(
         {
@@ -40,7 +44,11 @@ module.exports = function(parent, { id }, { currentUser }) {
         }
       )
     ])
-    .then(([ organisation ]) => organisation)
+    .then(([ organisation, user ]) => {
+      loaders.User.clear(user._id).prime(user._id, user);
+      loaders.Organisation.clear(organisation._id).prime(organisation._id, organisation)
+      return organisation;
+    })
     .catch(e => console.log(e));
   }
 
@@ -66,14 +74,12 @@ module.exports = function(parent, { id }, { currentUser }) {
           },
           {
             $push: {
-              organisations: Object.assign(
-                {},
-                organisation.toObject(),
-                {
-                  ack: true,
-                  confirm: (organisation.type === 'public'),
-                  role: (organisation.type === 'public') ? orgStatus.MEMBER : null
-                })
+              registrations: {
+                organisation: organisation.toObject(),
+                ack: true,
+                confirm: (organisation.type === 'public'),
+                role: (organisation.type === 'public') ? orgStatus.MEMBER : null,
+              },
             },
           }
         ),
