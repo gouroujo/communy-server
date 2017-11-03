@@ -12,7 +12,7 @@ module.exports = {
     },
 
     nusers(event) {
-      return event.nusers;
+      return event.no && event.no.length;
     },
 
     nanswer(event) {

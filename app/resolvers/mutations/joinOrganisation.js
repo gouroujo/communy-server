@@ -1,4 +1,4 @@
-const { models } = require('../../db');
+const { models, mongoose } = require('../../db');
 const { orgStatus } = require('../../dict');
 
 module.exports = function(parent, { id }, { currentUser, loaders }) {
@@ -57,7 +57,7 @@ module.exports = function(parent, { id }, { currentUser, loaders }) {
     .then(organisation => {
       if (!organisation) return new Error('Organisation Not Found');
       if (organisation.type === 'secret') return new Error('Forbidden');
-
+      const registrationId = mongoose.Types.ObjectId();
       return Promise.all([
         Promise.resolve(organisation),
         models.Organisation.updateOne(
@@ -75,6 +75,7 @@ module.exports = function(parent, { id }, { currentUser, loaders }) {
           {
             $push: {
               registrations: {
+                _id: registrationId,
                 organisation: organisation.toObject(),
                 ack: true,
                 confirm: (organisation.type === 'public'),
@@ -83,26 +84,17 @@ module.exports = function(parent, { id }, { currentUser, loaders }) {
             },
           }
         ),
-        models.Registration.updateOne(
-          {
-            "user._id": currentUser._id,
-            "organisation._id": id,
+        models.Registration.create({
+          _id: registrationId,
+          organisation: organisation.toObject(),
+          user: {
+            _id: currentUser._id,
+            fullname: currentUser.fullname,
           },
-          {
-            "$set": {
-              "organisation": organisation,
-              "user": {
-                _id: currentUser._id,
-                fullname: currentUser.fullname,
-                email: currentUser.email,
-              },
-              "ack": true,
-              "confirm": (organisation.type === 'public'),
-              "role": (organisation.type === 'public') ? orgStatus.MEMBER : null
-            }
-          },
-          { upsert: true }
-        )
+          ack: true,
+          confirm: (organisation.type === 'public'),
+          role: (organisation.type === 'public') ? orgStatus.MEMBER : null
+        })
       ])
     })
     .then(([organisation]) => organisation)

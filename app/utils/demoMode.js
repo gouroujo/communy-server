@@ -46,23 +46,27 @@ module.exports = async function(organisationId) {
       events: [],
       demo: true,
       userCreated: false,
-      organisations: [{
-        _id: organisation._id,
-        title: organisation.title,
+      registrations: [{
+        _id: mongoose.Types.ObjectId(),
+        organisation: {
+          _id: organisation._id,
+          title: organisation.title,
+        },
         role: confirm ? lodash.sample(lodash.values(orgStatus)) : null,
         ack: ack,
         confirm: confirm,
-      }],
+      }]
     }
   });
 
   const registrations = users.map(user => ({
+    _id: user.registrations[0]._id,
     user,
     organisation,
     demo: true,
-    confirm: user.organisations[0].confirm,
-    ack: user.organisations[0].ack,
-    role: user.organisations[0].role
+    confirm: user.registrations[0].confirm,
+    ack: user.registrations[0].ack,
+    role: user.registrations[0].role
   }));
 
   const events = lodash.times(20, () => {
@@ -91,17 +95,17 @@ module.exports = async function(organisationId) {
         title: organisation.title,
       },
       nusers: nusers,
-      yes: selectedUsers.filter((u, i) => (i % 3) && u.organisations[0].confirm),
-      mb: selectedUsers.filter((u, i) => (i+1 % 3)&& u.organisations[0].confirm),
-      no: selectedUsers.filter((u, i) => (i+2 % 3) && u.organisations[0].confirm),
+      yes: selectedUsers.filter((u, i) => ((i % 3) === 0) && u.registrations[0].confirm),
+      mb: selectedUsers.filter((u, i) => ((i % 3) === 1) && u.registrations[0].confirm),
+      no: selectedUsers.filter((u, i) => ((i % 3) === 2) && u.registrations[0].confirm),
     }
   });
 
   organisation.set({
     demo: true,
-    nusers: organisation.nusers + users.filter(user => user.organisations[0].confirm).length,
-    nwt_confirm: organisation.nwt_confirm + users.filter(user => !user.organisations[0].confirm).length,
-    nwt_ack: organisation.nwt_ack + users.filter(user => !user.organisations[0].ack).length,
+    nusers: organisation.nusers + users.filter(user => user.registrations[0].confirm).length,
+    nwt_confirm: organisation.nwt_confirm + users.filter(user => !user.registrations[0].confirm).length,
+    nwt_ack: organisation.nwt_ack + users.filter(user => !user.registrations[0].ack).length,
     nevents: organisation.nevents + events.length,
   });
 

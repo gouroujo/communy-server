@@ -1,4 +1,4 @@
-const { models } = require('../../db');
+const { models, mongoose } = require('../../db');
 const { orgStatus } = require('../../dict');
 const config = require('../../config');
 
@@ -35,6 +35,7 @@ module.exports = function (parent, { id, input }, { currentUser, loaders }) {
     // 3 - Find the newly created users
     .then(() => models.User.find({ email: { $in: input.users.map(u => u.email) } }))
     .then(users => {
+      const registrationId = mongoose.Types.ObjectId();
       return Promise.all([
         // 4a - Add the users with no pending request
         models.User.updateMany({
@@ -47,6 +48,7 @@ module.exports = function (parent, { id, input }, { currentUser, loaders }) {
         }, {
           $push: {
             registrations: {
+              _id: registrationId,
               organisation: {
                 _id: organisation._id,
                 title: organisation.title,
@@ -83,6 +85,7 @@ module.exports = function (parent, { id, input }, { currentUser, loaders }) {
                 updatedAt: date,
               },
               $setOnInsert: {
+                _id: registrationId,
                 ack: false,
                 "user._id": user._id,
                 "user.fullname": user.fullname,

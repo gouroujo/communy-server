@@ -14,12 +14,6 @@ const RegistrationSchema = new Schema({
       trim: true,
       index: true
     },
-    email: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
   },
   organisation: {
     _id: {

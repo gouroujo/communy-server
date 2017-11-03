@@ -37,6 +37,7 @@ const SubOrganisationSchema = new Schema({
 }, { _id: false });
 
 const SubRegistrationSchema = new Schema({
+  _id: { type: Schema.Types.ObjectId, ref: 'Registration', required: true },
   organisation: SubOrganisationSchema,
   role: {
     type: String,
