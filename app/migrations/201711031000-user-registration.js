@@ -1,39 +1,37 @@
-module.exports = async function(filename, db) {
-  const migration = await db.models.Migration.findOne({ filename });
-  if (migration) {
-    console.log('already migrate')
-    return null;
-  }
+const { models } = require('../db');
 
-  try {
-    const users = await db.models.User.find({
-      "organisations": { $exists: true }
-    }, { organisations: 1 });
-
-    await Promise.all(users.map(user => {
-      const organisations = user.get("organisations")
+module.exports = function() {
+  return models.User.find({
+    "organisations": { $exists: true }
+  })
+  .then(users => {
+    return Promise.all(users.map(user => {
+      const organisations = user.get("organisations");
       if (organisations) {
-        user.set({
-          registrations: organisations.map(organisation => ({
+        return Promise.all(organisations.map(async o => {
+          const registration = await models.Registration.findOne({
+            "organisation._id": o._id,
+            "user._id": user._id,
+          });
+          const organisation = await models.Organisation.findById(o._id);
+
+          return {
+            _id: registration._id,
             ack: organisation.ack,
-            confirm: organisation.confirm,
-            role: organisation.role,
+            confirm: registration.confirm,
+            role: registration.role,
             organisation: {
               title: organisation.title,
               _id: organisation._id,
             }
-          })),
-        });
+          }
+        }))
+        .then(registrations => {
+          user.set({ registrations });
+          user.set('organisations', undefined, { strict: false });
+          return user.save()
+        })
       }
-
-      user.set('organisations', undefined, { strict: false });
-      return user.save()
     }))
-    return db.models.Migration.create({ filename })
-  } catch (e) {
-    console.log(e)
-  }
-
-  return;
-
+  })
 }

@@ -40,6 +40,7 @@ app.use('/admin/*', bodyParser.json());
 // app.use('/admin/createorg', require('./admin/join'));
 app.use('/admin/createorg', require('./admin/create'));
 app.use('/admin/demo', require('./admin/demo'));
+app.use('/admin/migration', require('./admin/migration'));
 
 
 connection.on('error', console.error.bind(console, 'connection error:'));

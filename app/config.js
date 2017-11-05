@@ -59,7 +59,7 @@ nconf.set('PRODUCTION', process.env.NODE_ENV === 'production');
 
 if (nconf.get('PRODUCTION')) {
   checkConfig('GCLOUD_PROJECT');
-  checkConfig('OPTICS_API_KEY');
+  // checkConfig('OPTICS_API_KEY');
   if (nconf.get('SECRET') === 'secret') {
     throw new Error(`You must set SECRET as an environment variable or in config.json!`);
   }

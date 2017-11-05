@@ -28,13 +28,6 @@ db.mongoose.connect(config.get('MONGO_URI'), { useMongoClient: true }, (err) => 
   if (err) throw err;
   console.log('Successfully connected to MongoDB');
   if (config.get('DEBUG') == 1) db.mongoose.set('debug', true);
-
-  const normalizedPath = require("path").join(__dirname, "migrations");
-
-  require("fs").readdirSync(normalizedPath).forEach(function(file) {
-    console.log('running migration: ' + file)
-    require("./migrations/" + file)(file, db);
-  });
 });
 
 
