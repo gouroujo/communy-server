@@ -16,6 +16,24 @@ module.exports = {
     title(organisation, params, { getField }) {
       return getField('title', organisation, 'Organisation');
     },
+    description(organisation, params, { getField }) {
+      return getField('description', organisation, 'Organisation');
+    },
+    type(organisation, params, { getField }) {
+      return getField('type', organisation, 'Organisation');
+    },
+    categories(organisation, params, { getField }) {
+      return getField('categories', organisation, 'Organisation');
+    },
+    nusers(organisation, args, { getField }) {
+      return getField('nusers', organisation, 'Organisation');
+    },
+    nack(organisation, args, { getField }) {
+      return getField('nwt_ack', organisation, 'Organisation');
+    },
+    nconfirm(organisation, args, { getField }) {
+      return getField('nwt_confirm', organisation, 'Organisation');
+    },
 
     logo(organisation, { width, height, radius }) {
       if (!organisation._id) return null;
@@ -45,18 +63,6 @@ module.exports = {
         secure: true,
         version: organisation.cover ? organisation.cover : null
       })
-    },
-
-    nusers(organisation, args, { getField }) {
-      return getField('nusers', organisation, 'Organisation');
-    },
-
-    nack(organisation, args, { getField }) {
-      return getField('nwt_ack', organisation, 'Organisation');
-    },
-
-    nconfirm(organisation, args, { getField }) {
-      return getField('nwt_confirm', organisation, 'Organisation');
     },
 
     registration(organisation, { userId }, { auth, currentUserId, loaders }, info) {
