@@ -43,6 +43,8 @@ const MessageSchema = new Schema({
       type: String,
       trim: true,
     },
+    email: String,
+    phone: String,
   },
   mailing: SubMailingSchema,
   readAt: Date,
