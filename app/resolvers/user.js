@@ -1,54 +1,95 @@
-const { omit, difference } = require('lodash');
+const { omit } = require('lodash');
 const { models } = require('../db');
+const cloudinary = require('../cloudinary');
+
 // const memcached = require('../memcached');
-const getFieldNames = require('../utils/getFields');
 const linkFacebook = require('../utils/linkFacebook');
 
 module.exports = {
   User: {
     id(user) {
-      return user._id || user.id;
+      return user._id;
     },
-
-    hasCredentials(user) {
-      return !!(user.password || user.facebookId)
+    hasCredentials(user, params, { getField }) {
+      return Promise.all([
+        getField('password', user, 'User'),
+        getField('facebookId', user, 'User')
+      ]).then(([password, facebookId]) => {
+        return !!(password || facebookId)
+      })
+    },
+    firstname(user, params, { getField }) {
+      return getField('firstname', user, 'User');
+    },
+    lastname(user, params, { getField }) {
+      return getField('lastname', user, 'User');
+    },
+    email(user, params, { getField }) {
+      return getField('email', user, 'User');
+    },
+    birthday(user, params, { getField }) {
+      return getField('birthday', user, 'User');
+    },
+    birthplace(user, params, { getField }) {
+      return getField('birthplace', user, 'User');
+    },
+    phone1(user, params, { getField }) {
+      return getField('phone1', user, 'User');
+    },
+    phone2(user, params, { getField }) {
+      return getField('phone2', user, 'User');
     },
 
     fullname(user, args, { getField }) {
-      return getField('fullname', user, 'User');
+      if (user.fullname) return user.fullname;
+      return Promise.all([
+        getField('firstname', user, 'User'),
+        getField('lastname', user, 'User'),
+        getField('email', user, 'User')
+      ]).then(([firstname, lastname, email]) => {
+        return (firstname || lastname) ? `${firstname || ''} ${lastname || ''}` : email;
+      })
     },
 
     registrations(user, { role, limit, offset }, { getField }) {
       return getField('registrations', user, 'User');
     },
 
-    answer(user, { eventId }, { currentUser, loaders }) {
-      return loaders.Event.load(eventId)
-      .then(event => {
-        if (!event) return null;
-        if (event.yes && event.yes.find(u => String(u._id) === String(user._id))) return 'yes';
-        if (event.mb && event.mb.find(u => String(u._id) === String(user._id))) return 'mb';
-        if (event.no && event.no.find(u => String(u._id) === String(user._id))) return 'no';
-        return null;
-      })
-    },
+    participations(user, { before, after, limit, offset, organisationId, answer }, { auth, currentUserId }) {
+      const query = models.Participation.find({});
 
-    events(user, { before, after, limit, offset, organisationId, answer = 'yes' }, { currentUser }, info) {
-      if (!user) return [];
-      const query = models.Event.find({});
-      query.select('-yes -no -mb');
-
-      if (answer) query.where(answer).elemMatch({ _id : user._id || user.id });
-      if (after) query.gte('endTime', after);
-      if (before) query.lte('startTime', before);
-      if (organisationId) {
+      if (user._id === currentUserId) {
+        query.where('user._id').equals(currentUserId);
+      } else if (organisationId && auth.check(`organisation:${organisationId}:event_add_user`)) {
+        query.where('user._id').equals(user._id);
         query.where('organisation._id').equals(organisationId);
       } else {
-        query.in('organisation._id',
-          currentUser.organisations.map(o => o._id)
-        );
+        return null;
       }
-      return query.sort('endTime').limit(limit).skip(offset).lean().exec();
+
+      if (answer) query.where('answer').equals(answer);
+      if (after) query.gte('event.endTime', after);
+      if (before) query.lte('event.startTime', before);
+
+      return query.sort('event.endTime').limit(limit).skip(offset).lean().exec();
+    },
+
+    async participation(user, { eventId }, { auth, currentUserId }) {
+      try {
+        const participation = await models.Participation.findOne({
+          "user._id": user._id,
+          "event._id": eventId,
+        });
+        if (!participation) return null;
+        if ((user._id !== currentUserId) && !auth.check(`organisation:${participation.organisation._id}:event_add_user`)) {
+          return null;
+        }
+
+        return participation;
+      } catch(e) {
+        console.log(e);
+        return null;
+      }
     },
 
     messages(user, { limit, offset, organisationId, read }) {
@@ -63,18 +104,33 @@ module.exports = {
 
     nunreadMessage(user) {
       return models.Message.count({
-        "to._id": user.id,
+        "to._id": user._id,
         readAt: null
+      })
+    },
+
+    avatar(user, { width, height, radius }) {
+      if (!user._id) return null;
+      return cloudinary.url(`users/${user._id}/avatar.jpg`,{
+        gravity: "center",
+        height: height ? Math.min(height, 300) : 40,
+        radius,
+        width: width ? Math.min(width, 300) : 40,
+        crop: 'fit',
+        default_image: 'avatar',
+        sign_url: true,
+        secure: true,
+        version: user.avatar ? user.avatar : null
       })
     },
   },
 
   Query: {
-    user(parent, { id, organisationId }, { currentUser, loaders }) {
-      if (!currentUser) return new Error('Unauthorized');
+    user(parent, { id, organisationId }, { auth, loaders }) {
+      if (!auth) return null;
       return loaders.User.load(id);
     },
-    users(_, { organisationId, search, limit, offset }, { currentUser }) {
+    users(_, { organisationId, search, limit, offset }) {
       const searchRegEx = new RegExp(search,'i');
       return models.User.find({
         $or: [
@@ -89,18 +145,18 @@ module.exports = {
       .exec()
     },
 
-    me(parent, args, { currentUser, loaders }) {
-      if (!currentUser) return null;
-      return loaders.User.load(currentUser._id);
+    me(parent, args, { currentUserId, loaders }) {
+      if (!currentUserId) return null;
+      return loaders.User.load(currentUserId);
     },
 
   },
 
   Mutation: {
-    async editUser(parent, { id, input }, { currentUser }) {
-      if (!currentUser) return new Error('Unauthorized');
+    async editUser(parent, { id, input }, { currentUserId, loaders }) {
+      if (!currentUserId) return null;
       // TODO: id is not used at the moment
-
+      const currentUser = loaders.User.load(currentUserId)
       if (input.facebookAccessToken && input.facebookId && input.facebookId !== currentUser.facebookId) {
         await linkFacebook(currentUser, {
           facebookId: input.facebookId,

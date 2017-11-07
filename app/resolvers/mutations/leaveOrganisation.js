@@ -1,9 +1,9 @@
 const removeUsers = require('../../tasks/removeUsers');
 
-module.exports = function(parent, { id }, { currentUser }) {
-  if (!currentUser) return new Error('Unauthorized');
+module.exports = function(parent, { id }, { currentUserId }) {
+  if (!currentUserId) return null;
 
-  return removeUsers([currentUser._id], id)
+  return removeUsers([currentUserId], id)
   .then(organisation => {
     return organisation
   })

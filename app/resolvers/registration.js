@@ -14,5 +14,8 @@ module.exports = {
     confirm(registration) {
       return registration.confirm
     },
+    user(registration, params, { getField}) {
+      return getField('user', registration, 'Registration');
+    }
   }
 }

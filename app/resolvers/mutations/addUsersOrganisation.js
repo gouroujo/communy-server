@@ -4,11 +4,11 @@ const config = require('../../config');
 
 const pubsub = require('../../utils/pubsub');
 
-module.exports = function (parent, { id, input }, { currentUser, loaders }) {
-  if (!currentUser) return new Error('Unauthorized');
-  if (!currentUser.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
+module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
+  if (!auth) return new Error('Unauthorized');
+  if (!auth.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
   const date = new Date();
-
+  const currentUser = await loaders.User.load(currentUserId);
   // 1 - Find the organisation
   return models.Organisation.findById(id)
   .then(organisation => {

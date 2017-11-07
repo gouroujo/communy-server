@@ -1,7 +1,9 @@
 const { models, mongoose } = require('../../db');
 const { orgStatus } = require('../../dict');
 
-module.exports = function(parent, { id }, { currentUser, loaders }) {
+module.exports = async function(parent, { id }, { currentUserId, loaders }) {
+  if (!currentUserId) return null;
+  const currentUser = await loaders.User.load(currentUserId);
   const userRegistration = currentUser.registrations.find(r => (
     String(r.organisation._id) === id
   ))

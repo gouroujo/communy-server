@@ -1,8 +1,8 @@
 const { models } = require('../../db');
 
-module.exports = function (parent, { id, input }, { currentUser, loaders }) {
-  if (!currentUser) return new Error('Unauthorized');
-  if (!currentUser.permissions.check(`organisation:${id}:edit`)) return new Error('Forbidden');
+module.exports = function (parent, { id, input }, { auth, loaders }) {
+  if (!auth) return new Error('Unauthorized');
+  if (!auth.check(`organisation:${id}:edit`)) return new Error('Forbidden');
 
   return Promise.all([
     models.Organisation.findByIdAndUpdate(id, input, { new: true }),

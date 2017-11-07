@@ -28,10 +28,10 @@ const EventSchema = new Schema({
     title: String,
   },
   demo: Boolean,
-  nusers: { type: Number, default: 0 },
-  yes: [SubUserSchema],
-  mb: [SubUserSchema],
-  no: [SubUserSchema],
+  nanswers: { type: Number, default: 0 },
+  nyes: { type: Number, default: 0 },
+  nno: { type: Number, default: 0 },
+  nmb: { type: Number, default: 0 },
   address: AddressSchema,
 });
 

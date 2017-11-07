@@ -61,8 +61,11 @@ module.exports = async function(organisationId) {
 
   const registrations = users.map(user => ({
     _id: user.registrations[0]._id,
-    user,
-    organisation,
+    user: {
+      _id: user._id,
+      fullname: `${user.firstname} ${user.lastname}`,
+    },
+    organisation: organisation.toObject(),
     demo: true,
     confirm: user.registrations[0].confirm,
     ack: user.registrations[0].ack,

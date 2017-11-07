@@ -1,14 +1,14 @@
 const { models } = require('../../db');
 
-module.exports = function (parent, { id }, { currentUser }) {
-  if (!currentUser) return new Error('Unauthorized');
-  if (!currentUser.permissions.check(`organisation:${id}:delete`)) return new Error('Forbidden');
+module.exports = async function (parent, { id }, { auth }) {
+  if (!auth) return null;
+  if (!auth.check(`organisation:${id}:delete`)) return null;
 
-  return Promise.all([
-    models.Organisation.deleteOne({ _id: id }),
-    models.Event.deleteMany({ "organisation._id": id }),
-    models.Registration.deleteMany({ "organisation._id": id }),
-    models.User.bulkWrite([
+  try {
+    await models.Organisation.deleteOne({ _id: id });
+    const events = await models.Event.deleteMany({ "organisation._id": id });
+    await models.Registration.deleteMany({ "organisation._id": id });
+    await models.User.bulkWrite([
       {
         deleteMany: {
           filter: {
@@ -52,8 +52,14 @@ module.exports = function (parent, { id }, { currentUser }) {
           }
         },
       },
-    ])
-  ])
-  .then(() => null)
-  .catch(e => console.log(e))
+    ]);
+    console.log(events);
+
+    return null;
+    
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+
 }

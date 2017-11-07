@@ -1,15 +1,16 @@
 const { models } = require('../../db');
 const { orgStatus } = require('../../dict');
 
-module.exports = function (parent, { input }, { currentUser, loaders }) {
-  if (!currentUser) return new Error('Unauthorized');
+module.exports = async function (parent, { input }, { currentUserId, loaders }) {
+  if (!currentUserId) return null;
 
-  return models.Organisation.create(Object.assign({}, input, {
-    nusers: 1,
-  }))
-  .then(organisation => {
-    return Promise.all([
-      Promise.resolve(organisation),
+  try {
+    const currentUser = await loaders.User.load(currentUserId);
+    const organisation = await models.Organisation.create(Object.assign({}, input, {
+      nusers: 1,
+    }));
+
+    await Promise.all([
       models.User.update({ _id: currentUser._id }, {
         $push: { registrations: {
           ack: true,
@@ -20,16 +21,19 @@ module.exports = function (parent, { input }, { currentUser, loaders }) {
         $inc: { norganisations: 1 }
       }),
       models.Registration.create({
-        user: currentUser.toObject(),
+        user: currentUser,
         organisation: organisation.toObject(),
         ack: true,
         confirm: true,
         role: orgStatus.ADMIN,
       })
-    ])
-  })
-  .then(([ organisation ]) => {
+    ]);
+
     loaders.Organisation.prime(organisation._id, organisation)
-    return organisation
-  });
+    return organisation;
+
+  } catch(e) {
+    console.log(e);
+    return null;
+  }
 }

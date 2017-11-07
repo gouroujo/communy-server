@@ -32,15 +32,15 @@ module.exports = {
     },
   },
   Query: {
-    message(_, { id }, { currentUser, loaders }) {
+    message(_, { id }, { loaders }) {
       return loaders.Message.load(id);
     },
   },
   Mutation: {
-    async readMessage(_, { id }, { currentUser }) {
+    async readMessage(_, { id }, { currentUserId }) {
       const message = await models.Message.findOne({
         _id: id,
-        "to._id": currentUser._id,
+        "to._id": currentUserId,
       });
 
       if (!message) return null;

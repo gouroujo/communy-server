@@ -17,21 +17,23 @@ module.exports = {
     },
   },
   Query: {
-    mailing(_, { id }, { currentUser, loaders }) {
+    mailing(_, { id }, { loaders }) {
       return loaders.Mailing.load(id);
     },
-    mailings(_, { organisationId }, { currentUser }) {
+    mailings(_, { organisationId }, { auth }) {
       return models.Mailing.find({ organisationId });
     },
   },
   Mutation: {
-    async createAndSendMailing(_, { input }, { currentUser, loaders }) {
+    async createAndSendMailing(_, { input }, { currentUserId, loaders }) {
       const [
         organisation,
-        users
+        users,
+        currentUser
       ] = await Promise.all([
         loaders.Organisation.load(input.organisationId),
-        models.User.find({ _id: { $in: input.receipients }}, 'firstname lastname email').lean().exec()
+        models.User.find({ _id: { $in: input.receipients }}, 'firstname lastname email').lean().exec(),
+        loaders.User.load(currentUserId)
       ])
 
       const date = Date.now();

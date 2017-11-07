@@ -13,6 +13,7 @@ const user = require('./user');
 const registration = require('./registration');
 const mailing = require('./mailing');
 const message = require('./message');
+const participation = require('./participation');
 
 const index = {
   Date: GraphQLDate,
@@ -62,4 +63,4 @@ const index = {
   }
 };
 
-module.exports = merge(index, event, organisation, user, registration, mailing, message);
+module.exports = merge(index, event, organisation, user, registration, mailing, message, participation);

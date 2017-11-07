@@ -1,4 +1,3 @@
-const shiroTrie = require('shiro-trie');
 const { Schema } = require('mongoose');
 const { pbkdf2, randomBytes, timingSafeEqual } = require('crypto');
 const { sign, verify } = require('jsonwebtoken');
@@ -92,19 +91,6 @@ UserSchema.virtual('fullname')
   .set(function(v) {
     this.firstname = v.substr(0, v.indexOf(' '));
     this.lastname = v.substr(v.indexOf(' ') + 1);
-  });
-
-UserSchema.virtual('permissions')
-  .get(function() {
-    const permissions = shiroTrie.new();
-
-    if (this.registrations) {
-      permissions.add(this.registrations.reduce((p, r) => {
-        if (!r.role || !r.organisation._id) return p;
-        return p.concat(orgPermissions[r.role].map(a => `organisation:${r.organisation._id}:${a}`));
-      }, []));
-    }
-    return permissions;
   });
 
 UserSchema.pre('save', function(next) {

@@ -24,8 +24,16 @@ const RegistrationSchema = new Schema({
     title:  { type: String, required: true },
   },
   demo: Boolean,
-  confirm: { type: Boolean, default: false, required: true },
-  ack: { type: Boolean, default: false, required: true },
+  confirm: {
+    type: Boolean,
+    default: false,
+    required: true
+  },
+  ack: {
+    type: Boolean,
+    default: false,
+    required: true
+  },
   role: {
     type: String,
     enum: values(orgStatus).concat([null]),

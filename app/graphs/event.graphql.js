@@ -1,3 +1,5 @@
+const Participation = require('./participation.graphql')
+
 const Event = /* GraphQL */`
 extend type Query {
   events (
@@ -47,21 +49,26 @@ type Event {
   days: [String!]!
   allDay: Boolean
   organisation: Organisation!
+
   nanswer: Int
   nusers: Int!
+
   nno: Int
   nmb: Int
+  nyes: Int
 
-  users(
+  participations(
     limit: Int
     offset: Int
     yes: Boolean
     no: Boolean
     mb: Boolean
-  ): [User!]
+  ): [Participation!]
 
   address: Address
-  answer: EventAnswer
+  participation (
+    userId: ID
+  ): Participation
 }
 
 input EventInput {
@@ -79,4 +86,4 @@ input addUserToEventInput {
 }
 `;
 
-module.exports = () => [Event]
+module.exports = () => [Event, Participation]

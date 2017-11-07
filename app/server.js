@@ -5,6 +5,7 @@ const compression = require('compression');
 const { graphiqlExpress } = require('graphql-server-express');
 const OpticsAgent = require('optics-agent');
 
+const AuthMiddleware = require('./auth/middleware');
 const config = require('./config');
 const db = require('./db');
 
@@ -18,6 +19,7 @@ app.use(config.get('ENDPOINT_URL'),
   compression(),
   bodyParser.json(),
   OpticsAgent.middleware(),
+  AuthMiddleware(),
   require('./graphql')
 );
 

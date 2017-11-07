@@ -46,16 +46,20 @@ type User {
     role: OrganisationRole
   ): Int!
 
-  events (
+  participation (
+    eventId: ID!
+  ): Participation
+  
+  participations (
     organisationId: ID
     after: Date
     before: Date
     answer: EventAnswer
     limit: Int
     offset: Int
-  ): [Event!]
+  ): [Participation!]
 
-  nevents (
+  nparticipations (
     organisationId: ID
     after: Date
     before: Date

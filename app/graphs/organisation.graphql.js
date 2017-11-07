@@ -11,7 +11,7 @@ extend type Query {
 
   organisation (
     id: ID!
-  ): Organisation!
+  ): Organisation
 }
 
 extend type Mutation {

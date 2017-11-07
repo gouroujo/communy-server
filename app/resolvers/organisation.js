@@ -16,7 +16,7 @@ module.exports = {
     title(organisation, params, { getField }) {
       return getField('title', organisation, 'Organisation');
     },
-    
+
     logo(organisation, { width, height, radius }) {
       if (!organisation._id) return null;
       return cloudinary.url(`organisations/${organisation._id}/logo.jpg`,{
@@ -59,20 +59,20 @@ module.exports = {
       return getField('nwt_confirm', organisation, 'Organisation');
     },
 
-    registration(organisation, { userId }, { currentUser, loaders }, info) {
+    registration(organisation, { userId }, { auth, currentUserId, loaders }, info) {
       if (
-        !currentUser ||
-        (userId && userId !== currentUser._id && !currentUser.permissions.check(`organisation:${organisation._id}:user_view`))
+        !auth ||
+        (userId && userId !== currentUserId && !auth.check(`organisation:${organisation._id}:user_view`))
       ) return null;
 
       return loaders.RegistrationLink.load({
         "organisation._id": organisation._id,
-        "user._id": userId || currentUser._id,
+        "user._id": userId || currentUserId,
       })
     },
 
-    registrations(organisation, { search, role, limit, offset, ack, confirm }, { currentUser }, info) {
-      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:user_list`)) return null;
+    registrations(organisation, { search, role, limit, offset, ack, confirm }, { auth }, info) {
+      if (!auth || !auth.check(`organisation:${organisation._id}:user_list`)) return null;
 
       const query = models.Registration.find({
         "organisation._id": organisation._id,
@@ -90,8 +90,8 @@ module.exports = {
       return organisation.nevents || 0
     },
 
-    events(organisation, { after, before, limit, offset }, { currentUser }, info) {
-      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:event_list`)) return null;
+    events(organisation, { after, before, limit, offset }, { auth }, info) {
+      if (!auth || !auth.check(`organisation:${organisation._id}:event_list`)) return null;
 
       const query = models.Event.find({
         "organisation._id": organisation._id
@@ -106,8 +106,8 @@ module.exports = {
       return models.Mailing.find({ "organisation._id": organisation._id })
     },
 
-    logoUploadOpts(organisation, params, { currentUser }) {
-      if (!currentUser || !currentUser.permissions.check(`organisation:${organisation._id}:upload_logo`)) return null;
+    logoUploadOpts(organisation, params, { auth }) {
+      if (!auth || !auth.check(`organisation:${organisation._id}:upload_logo`)) return null;
 
       const options = {
         api_key: config.get('CLOUDINARY_KEY'),
@@ -124,9 +124,9 @@ module.exports = {
       }));
     },
 
-    coverUploadOpts(organisation, params, { currentUser }) {
-      if (!currentUser) return null;
-      if (!currentUser.permissions.check(`organisation:${organisation._id}:upload_cover`)) return null;
+    coverUploadOpts(organisation, params, { auth }) {
+      if (!auth) return null;
+      if (!auth.check(`organisation:${organisation._id}:upload_cover`)) return null;
 
       const options = {
         api_key: config.get('CLOUDINARY_KEY'),

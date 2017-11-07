@@ -17,7 +17,7 @@ module.exports = function() {
 
           return {
             _id: registration._id,
-            ack: organisation.ack,
+            ack: registration.ack,
             confirm: registration.confirm,
             role: registration.role,
             organisation: {

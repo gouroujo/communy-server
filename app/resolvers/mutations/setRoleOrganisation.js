@@ -1,8 +1,8 @@
 const { models } = require('../../db');
 
-module.exports = function (parent, { id, input }, { currentUser }) {
-  if (!currentUser) return new Error('Unauthorized');
-  if (!currentUser.permissions.check(`organisation:${id}:set_${input.role}_role`)) return new Error('Forbidden');
+module.exports = function (parent, { id, input }, { auth }) {
+  if (!auth) return null;
+  if (!auth.check(`organisation:${id}:set_${input.role}_role`)) return new Error('Forbidden');
 
   return Promise.all([
     models.User.update(

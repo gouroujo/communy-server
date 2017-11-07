@@ -5,9 +5,10 @@ const { models } = require('../../db');
 const { orgStatus } = require('../../dict');
 const pubsub = require('../../utils/pubsub');
 
-module.exports = function (parent, { id, input }, { currentUser, loaders }) {
-  if (!currentUser) return new Error('Unauthorized');
-  if (!currentUser.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
+module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
+  if (!auth) return new Error('Unauthorized');
+  if (!auth.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
+  const currentUser = await loaders.User.load(currentUserId);
 
   return Promise.all([
     models.User.findOneAndUpdate(

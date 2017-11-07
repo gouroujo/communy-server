@@ -10,7 +10,6 @@ const AnswerSchema = new Schema({
     fullname: {
       type: String,
       trim: true,
-      index: true
     },
   },
   body: String
@@ -38,11 +37,11 @@ const MessageSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     fullname: {
       type: String,
       trim: true,
-      index: true
     },
   },
   mailing: SubMailingSchema,
