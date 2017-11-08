@@ -18,6 +18,16 @@ const OrganisationSchema = new Schema({
     index: true,
     required: true
   },
+  network: {
+    type: Boolean,
+    index: true,
+    sparse: true
+  },
+  networks: {
+    type: [Schema.Types.ObjectId],
+    index: true,
+    sparse: true,
+  },
   demo: Boolean,
   nusers: { type: Number, default: 0, required: true },
   nevents: { type: Number, default: 0 , required: true},

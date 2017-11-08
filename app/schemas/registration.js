@@ -23,6 +23,15 @@ const RegistrationSchema = new Schema({
     },
     title:  { type: String, required: true },
   },
+  network: {
+    _id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organisation',
+      index: true,
+      sparse: true,
+    },
+    title:  { type: String },
+  },
   demo: Boolean,
   confirm: {
     type: Boolean,

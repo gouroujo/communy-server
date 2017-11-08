@@ -13,10 +13,10 @@ function createLoaderFor(model) {
     .then(results => {
       let offset = 0;
       return ids.map((id, i) => {
-        if (results[i + offset] && (String(id) === String(results[i + offset]._id))) {
-          return results[i + offset];
-        } else {
+        if (results[offset] && (String(id) === String(results[offset]._id))) {
           offset++;
+          return results[offset - 1];
+        } else {
           return null;
         }
       })
@@ -25,6 +25,7 @@ function createLoaderFor(model) {
 }
 
 module.exports =  function(userId) {
+  const EventParticipationLoaders = new Map();
   return {
     Event: createLoaderFor(models.Event),
     Organisation: createLoaderFor(models.Organisation),
@@ -36,6 +37,7 @@ module.exports =  function(userId) {
     Message: createLoaderFor(models.Message),
     Mailing: createLoaderFor(models.Mailing),
     User: createLoaderFor(models.User),
+    Participation: createLoaderFor(models.Participation),
     UserEventParticipation: new DataLoader(eventIds => {
       const castedIds = eventIds
         .map(id => mongoose.Types.ObjectId(id))
@@ -47,14 +49,39 @@ module.exports =  function(userId) {
       .then(participations => {
         let offset = 0;
         return eventIds.map((id, i) => {
-          if (participations[i + offset] && (String(id) === String(participations[i + offset].event._id))) {
-            return participations[i + offset];
-          } else {
+          if (participations[offset] && (String(id) === String(participations[offset].event._id))) {
             offset++;
+            return participations[offset - 1];
+          } else {
             return null;
           }
         })
       })
-    }, { cacheKeyFn: key => String(key)})
+    }, { cacheKeyFn: key => String(key)}),
+    UserParticipationForEvent: (eventId) => {
+      if (!EventParticipationLoaders.has(eventId)) {
+        EventParticipationLoaders.set(eventId, new DataLoader(userIds => {
+          const castedIds = userIds
+            .map(id => mongoose.Types.ObjectId(id))
+          return models.Participation.aggregate([
+            {$match: {"user._id": {$in: castedIds}, "event._id": mongoose.Types.ObjectId(eventId)}},
+            {$addFields: {"__order": {$indexOfArray: [castedIds, "$user._id" ]}}},
+            {$sort: {"__order": 1}}
+          ])
+          .then(participations => {
+            let offset = 0;
+            return userIds.map((id, i) => {
+              if (participations[offset] && (String(id) === String(participations[offset].user._id))) {
+                offset++;
+                return participations[offset - 1];
+              } else {
+                return null;
+              }
+            })
+          })
+        }, { cacheKeyFn: key => String(key)}))
+      }
+      return EventParticipationLoaders.get(eventId);
+    }
   }
 }

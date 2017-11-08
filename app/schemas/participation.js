@@ -36,6 +36,7 @@ const ParticipationSchema = new Schema({
     type: String,
     enum: values(eventStatus).concat([null]),
     default: null,
+    required: true,
   },
 }, {
   timestamps: true

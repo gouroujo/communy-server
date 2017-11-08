@@ -42,14 +42,24 @@ module.exports = {
       return dateArray;
     },
 
-    participation(event, { userId }, { loaders, auth, currentUserId }) {
-      if (!userId || userId === currentUserId) {
+    async participation(event, { userId }, { loaders, auth, currentUserId }) {
+      if (!currentUserId) return niull;
+      if (!userId) {
         return loaders.UserEventParticipation.load(event._id)
       }
-      return models.Participation.findOne({
-        "event._id": event._id,
-        "user._id": userId || currentUserId,
-      })
+
+      try {
+        const participation = await loaders.UserParticipationForEvent(event._id).load(userId);
+        if (!participation) return null;
+        if ((userId !== currentUserId) && !auth.check(`organisation:${participation.organisation._id}:event_add_user`)) {
+          return null;
+        }
+
+        return participation;
+      } catch(e) {
+        console.log(e);
+        return null;
+      }
     },
 
     participations(event, { offset, limit, yes, no, mb }, { auth }) {

@@ -11,7 +11,10 @@ module.exports = async function(req, res) {
   } = req.body;
 
   try {
-    if (demo) await demoMode(organisationId);
+    if (demo) {
+      const result = await demoMode(organisationId);
+      return res.status(201).json(result);
+    }
 
     return res.sendStatus(200);
   } catch (e) {

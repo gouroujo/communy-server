@@ -72,6 +72,7 @@ module.exports = async function(organisationId) {
     role: user.registrations[0].role
   }));
 
+  let participations = [];
   const events = lodash.times(20, () => {
     const startDate = moment()
       .date(lodash.random(-30, 60))
@@ -84,9 +85,8 @@ module.exports = async function(organisationId) {
       hours: lodash.random(0, 4),
       minutes: 15 * (lodash.random(30, 90) % 15),
     });
-    const nusers = lodash.random(10, 50);
-    const selectedUsers = lodash.sampleSize(users, nusers);
-    return {
+
+    const event = {
       _id: mongoose.Types.ObjectId(),
       title: '[DEMO]' + lodash.sample(eventsName),
       description: faker.lorem.paragraphs(),
@@ -97,11 +97,49 @@ module.exports = async function(organisationId) {
         _id: organisation._id,
         title: organisation.title,
       },
-      nusers: nusers,
-      yes: selectedUsers.filter((u, i) => ((i % 3) === 0) && u.registrations[0].confirm),
-      mb: selectedUsers.filter((u, i) => ((i % 3) === 1) && u.registrations[0].confirm),
-      no: selectedUsers.filter((u, i) => ((i % 3) === 2) && u.registrations[0].confirm),
-    }
+      nanswers: lodash.random(10, 50),
+      nyes: 0,
+      nno: 0,
+      nmb: 0,
+    };
+
+    const selectedUsers = lodash.sampleSize(
+      users.filter(u => u.registrations[0].confirm),
+      event.nanswers
+    );
+
+    participations = participations.concat(selectedUsers.map((u, i) => {
+      let answer;
+      if ((i % 3) === 0) {
+        answer = 'yes';
+        event.nyes++;
+      } else if ((i % 3) === 1) {
+         answer = 'mb';
+         event.nmb++;
+      } else {
+        answer = 'no';
+        event.nno++;
+      }
+      return {
+        organisation: {
+          _id: organisation._id,
+          title: organisation.title,
+        },
+        event: {
+          _id: event._id,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          title: event.title,
+        },
+        user: {
+          _id: u._id,
+          fullname: `${u.firstname} ${u.lastname}`,
+        },
+        answer: answer,
+      }
+    }))
+
+    return event;
   });
 
   organisation.set({
@@ -112,11 +150,11 @@ module.exports = async function(organisationId) {
     nevents: organisation.nevents + events.length,
   });
 
-
   return Promise.all([
     organisation.save(),
     models.User.insertMany(users),
     models.Event.insertMany(events),
-    models.Registration.insertMany(registrations)
+    models.Registration.insertMany(registrations),
+    models.Participation.insertMany(participations)
   ])
 }

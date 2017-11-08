@@ -74,12 +74,9 @@ module.exports = {
       return query.sort('event.endTime').limit(limit).skip(offset).lean().exec();
     },
 
-    async participation(user, { eventId }, { auth, currentUserId }) {
+    async participation(user, { eventId }, { loaders, auth, currentUserId }) {
       try {
-        const participation = await models.Participation.findOne({
-          "user._id": user._id,
-          "event._id": eventId,
-        });
+        const participation = await loaders.UserParticipationForEvent(eventId).load(user._id);
         if (!participation) return null;
         if ((user._id !== currentUserId) && !auth.check(`organisation:${participation.organisation._id}:event_add_user`)) {
           return null;
