@@ -133,6 +133,7 @@ module.exports = {
 
       const searchRegEx = new RegExp(search,'i');
       return models.User.find({
+        "registrations.organisation._id": organisationId,
         $or: [
           { firstname: { $regex: searchRegEx } },
           { lastname: { $regex: searchRegEx } },

@@ -91,7 +91,7 @@ module.exports = async function(parent, { id }, { currentUserId, loaders }) {
           organisation: organisation.toObject(),
           user: {
             _id: currentUser._id,
-            fullname: currentUser.fullname,
+            fullname: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email
           },
           ack: true,
           confirm: (organisation.type === 'public'),

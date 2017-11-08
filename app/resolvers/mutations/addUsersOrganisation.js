@@ -88,7 +88,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
                 _id: registrationId,
                 ack: false,
                 "user._id": user._id,
-                "user.fullname": user.fullname,
+                "user.fullname": (user.firstname || user.lastname) ? `${user.firstname + ' ' || ''}${user.lastname || ''}` : user.email,
                 "organisation._id": organisation._id,
                 "organisation.title": organisation.title,
                 createdAt: date,
@@ -125,7 +125,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
           id: user.id,
           organisationId: organisation.id,
         },
-        author: currentUser.fullname,
+        author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
         organisation: {
           id: organisation.id,
           title: organisation.title,

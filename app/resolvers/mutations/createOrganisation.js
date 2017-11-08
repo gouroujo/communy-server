@@ -21,7 +21,10 @@ module.exports = async function (parent, { input }, { currentUserId, loaders }) 
         $inc: { norganisations: 1 }
       }),
       models.Registration.create({
-        user: currentUser,
+        user: {
+          _id: currentUser._id,
+          fullname: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email
+        },
         organisation: organisation.toObject(),
         ack: true,
         confirm: true,
