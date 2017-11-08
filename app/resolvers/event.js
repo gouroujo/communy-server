@@ -70,7 +70,12 @@ module.exports = {
       if (no) query.where("answer", 'no');
       if (mb) query.where("answer", 'mb');
 
-      return query.limit(limit).skip(offset).lean().exec();
+      return query
+      .sort('user.fullname')
+      .limit(limit)
+      .skip(offset)
+      .lean()
+      .exec();
     },
 
     organisation(event, args, { getField }) {

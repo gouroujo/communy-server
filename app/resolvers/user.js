@@ -127,7 +127,10 @@ module.exports = {
       if (!auth) return null;
       return loaders.User.load(id);
     },
-    users(_, { organisationId, search, limit, offset }) {
+    users(_, { organisationId, search, limit, offset }, { auth }) {
+      if (!organisationId) return [];
+      if (!auth.check(`organisation:${organisationId}:user_list`)) return [];
+
       const searchRegEx = new RegExp(search,'i');
       return models.User.find({
         $or: [
@@ -136,6 +139,7 @@ module.exports = {
           { email: { $regex: searchRegEx } },
         ]
       })
+      .sort('firstname lastname email')
       .limit(limit)
       .skip(offset)
       .lean()

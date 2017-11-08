@@ -89,7 +89,12 @@ module.exports = {
       if (typeof ack !== 'undefined') query.where('ack').equals(ack)
       if (typeof confirm !== 'undefined') query.where('confirm').equals(confirm)
 
-      return query.limit(limit).skip(offset).lean().exec();
+      return query
+        .sort('user.fullname')
+        .limit(limit)
+        .skip(offset)
+        .lean()
+        .exec();
     },
 
     nevents(organisation) {
@@ -105,7 +110,7 @@ module.exports = {
 
       if (after) query.gte('endTime', after)
       if (before) query.lte('startTime', before)
-      return query.limit(limit).skip(offset).lean().exec()
+      return query.sort('endTime').limit(limit).skip(offset).lean().exec()
     },
 
     mailings(organisation) {
@@ -155,6 +160,7 @@ module.exports = {
       return models.Organisation.find({
         type: { "$ne": 'secret' }
       })
+      .sort('title')
       .skip(offset)
       .limit(limit)
       .lean();
