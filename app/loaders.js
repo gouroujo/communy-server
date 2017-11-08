@@ -14,7 +14,7 @@ function createLoaderFor(model) {
       let offset = 0;
       return ids.map((id, i) => {
         if (results[offset] && (String(id) === String(results[offset]._id))) {
-          offset++;
+          offset = offset + 1;
           return results[offset - 1];
         } else {
           return null;
@@ -50,7 +50,7 @@ module.exports =  function(userId) {
         let offset = 0;
         return eventIds.map((id, i) => {
           if (participations[offset] && (String(id) === String(participations[offset].event._id))) {
-            offset++;
+            offset = offset + 1;
             return participations[offset - 1];
           } else {
             return null;
@@ -72,7 +72,7 @@ module.exports =  function(userId) {
             let offset = 0;
             return userIds.map((id, i) => {
               if (participations[offset] && (String(id) === String(participations[offset].user._id))) {
-                offset++;
+                offset = offset + 1;
                 return participations[offset - 1];
               } else {
                 return null;
