@@ -63,6 +63,7 @@ type Organisation {
   title: String
   description: String
   type: String
+  demo: Boolean
   categories: [String!]
   logo(
     width: Int

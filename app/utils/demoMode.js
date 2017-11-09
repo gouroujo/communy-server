@@ -2,6 +2,8 @@ const { models, mongoose } = require('../db');
 const lodash = require('lodash');
 const faker = require('faker');
 var moment = require('moment');
+const cloudinary = require('../cloudinary');
+
 const { eventStatus, orgStatus } = require('../dict');
 
 faker.locale = "fr";
@@ -27,13 +29,18 @@ const eventsName = [
   'Découverte de la région'
 ]
 
-module.exports = async function(organisationId) {
+module.exports = async function(organisationId, o) {
+  const options = Object.assign({
+    users: 50,
+    events: 20,
+    participations: true,
+  }, o)
   const organisation = await models.Organisation.findById(organisationId);
 
-  const users = lodash.times(50, (i) => {
-    const id = mongoose.Types.ObjectId()
+  const users = lodash.times(options.users, (i) => {
+    const id = mongoose.Types.ObjectId();
     const confirm = !((i % 10) === 0)
-    const ack = !((i % 7) === 0)
+    const ack = !confirm || !((i % 7) === 0)
     return {
       _id: id,
       firstname: faker.name.firstName(),
@@ -73,7 +80,8 @@ module.exports = async function(organisationId) {
   }));
 
   let participations = [];
-  const events = lodash.times(20, () => {
+
+  const events = lodash.times(options.events, () => {
     const startDate = moment()
       .date(lodash.random(-30, 60))
       .hour(lodash.random(6, 22))
@@ -97,47 +105,49 @@ module.exports = async function(organisationId) {
         _id: organisation._id,
         title: organisation.title,
       },
-      nanswers: lodash.random(10, 50),
+      nanswers: options.users > 0 ? lodash.random(Math.min(options.users, 5), options.users) : 0,
       nyes: 0,
       nno: 0,
       nmb: 0,
     };
 
-    const selectedUsers = lodash.sampleSize(
-      users.filter(u => u.registrations[0].confirm),
-      event.nanswers
-    );
 
-    participations = participations.concat(selectedUsers.map((u, i) => {
-      let answer;
-      if ((i % 3) === 0) {
-        answer = 'yes';
-        event.nyes++;
-      } else if ((i % 3) === 1) {
-         answer = 'mb';
-         event.nmb++;
-      } else {
-        answer = 'no';
-        event.nno++;
-      }
-      return {
-        organisation: {
-          _id: organisation._id,
-          title: organisation.title,
-        },
-        event: {
-          _id: event._id,
-          startTime: event.startTime,
-          endTime: event.endTime,
-          title: event.title,
-        },
-        user: {
-          _id: u._id,
-          fullname: `${u.firstname} ${u.lastname}`,
-        },
-        answer: answer,
-      }
-    }))
+    if (options.users > 0) {
+      const selectedUsers = lodash.sampleSize(
+        users.filter(u => u.registrations[0].confirm),
+        event.nanswers
+      );
+      participations = participations.concat(selectedUsers.map((u, i) => {
+        let answer;
+        if ((i % 3) === 0) {
+          answer = 'yes';
+          event.nyes++;
+        } else if ((i % 3) === 1) {
+           answer = 'mb';
+           event.nmb++;
+        } else {
+          answer = 'no';
+          event.nno++;
+        }
+        return {
+          organisation: {
+            _id: organisation._id,
+            title: organisation.title,
+          },
+          event: {
+            _id: event._id,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            title: event.title,
+          },
+          user: {
+            _id: u._id,
+            fullname: `${u.firstname} ${u.lastname}`,
+          },
+          answer: answer,
+        }
+      }))
+    }
 
     return event;
   });

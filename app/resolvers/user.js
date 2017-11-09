@@ -1,9 +1,28 @@
-const { omit } = require('lodash');
+const { omit, sample } = require('lodash');
 const { models } = require('../db');
 const cloudinary = require('../cloudinary');
 
 // const memcached = require('../memcached');
 const linkFacebook = require('../utils/linkFacebook');
+
+const demoAvatars = [
+  'demo/ade.jpg',
+  'demo/zoe.jpg',
+  'demo/christian.jpg',
+  'demo/joe.jpg',
+  'demo/stevie.jpg',
+  'demo/veronika.jpg',
+  'demo/matt.jpg',
+  'demo/helen.jpg',
+  'demo/daniel.jpg',
+  'demo/steve.jpg',
+  'demo/elyse.png',
+  'demo/molly.png',
+  'demo/matthew.png',
+  'demo/jenny.jpg',
+  'demo/elliot.jpg',
+  'demo/kristy.png',
+];
 
 module.exports = {
   User: {
@@ -108,12 +127,15 @@ module.exports = {
 
     avatar(user, { width, height, radius }) {
       if (!user._id) return null;
-      return cloudinary.url(`users/${user._id}/avatar.jpg`,{
-        gravity: "center",
-        height: height ? Math.min(height, 300) : 40,
-        radius,
-        width: width ? Math.min(width, 300) : 40,
-        crop: 'fit',
+      if (user.demo) {
+        return cloudinary.url(sample(demoAvatars),{
+          transformation: 'avatarT',
+          sign_url: true,
+          secure: true,
+        })
+      }
+      return cloudinary.url(`users/${user._id}/avatar`,{
+        transformation: 'avatarT',
         default_image: 'avatar',
         sign_url: true,
         secure: true,

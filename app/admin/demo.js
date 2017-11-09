@@ -7,12 +7,13 @@ module.exports = async function(req, res) {
 
   const {
     organisationId,
-    demo
+    demo,
+    options
   } = req.body;
 
   try {
     if (demo) {
-      const result = await demoMode(organisationId);
+      const result = await demoMode(organisationId, options);
       return res.status(201).json(result);
     }
 

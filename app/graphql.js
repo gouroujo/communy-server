@@ -36,9 +36,13 @@ module.exports = graphqlExpress((req, res) => {
       loaders: loaders,
       language: req.acceptsLanguages(['fr', 'en']),
       getField: (fieldName, parent, loader) => {
-        if (parent[fieldName]) return Promise.resolve(parent[fieldName]);
-        return loaders[loader].load(parent._id)
+        return (parent[fieldName] ? Promise.resolve(parent) : loaders[loader].load(parent._id))
           .then(loaded => loaded[fieldName])
+          .then(field => {
+            if (!parent.demo) return field;
+            if (typeof field === 'object') return Object.assign(field, { demo: true })
+            return field;
+          })
           .catch(e => {
             console.log(e);
             return null

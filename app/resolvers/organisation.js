@@ -22,6 +22,9 @@ module.exports = {
     type(organisation, params, { getField }) {
       return getField('type', organisation, 'Organisation');
     },
+    demo(organisation, params, { getField }) {
+      return getField('demo', organisation, 'Organisation');
+    },
     categories(organisation, params, { getField }) {
       return getField('categories', organisation, 'Organisation');
     },
