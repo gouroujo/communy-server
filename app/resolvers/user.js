@@ -180,7 +180,7 @@ module.exports = {
     async editUser(parent, { id, input }, { currentUserId, loaders }) {
       if (!currentUserId) return null;
       // TODO: id is not used at the moment
-      const currentUser = loaders.User.load(currentUserId)
+      const currentUser = await models.User.findById(currentUserId)
       if (input.facebookAccessToken && input.facebookId && input.facebookId !== currentUser.facebookId) {
         await linkFacebook(currentUser, {
           facebookId: input.facebookId,
@@ -200,7 +200,6 @@ module.exports = {
               "user._id": currentUser._id
             },
             {
-              "user.email": currentUser.email,
               "user.fullname": currentUser.fullname
             }
           )

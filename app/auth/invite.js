@@ -14,9 +14,13 @@ module.exports = function(req, res) {
   .then(payload => {
     return models.User.findById(payload.id)
     .then(user => {
-      const userOrg = user.organisations.id(payload.organisationId)
+
+      const userRegistration = user.registrations.find(r => (
+        String(r.organisation._id) === payload.organisationId
+      ))
+
       // User has already join the organisation and acknowledged
-      if (userOrg && userOrg.ack) {
+      if (userRegistration && userRegistration.ack) {
         return Promise.all([
           Promise.resolve(user),
           models.Organisation.findById(payload.organisationId)
@@ -45,16 +49,16 @@ module.exports = function(req, res) {
         models.User.updateOne(
           {
             "_id": payload.id,
-            "organisations": {
+            "registrations": {
               "$elemMatch": {
-                "_id": payload.organisationId,
+                "organisation._id": payload.organisationId,
                 "ack": false
               }
             }
           },
           {
             "$set": {
-              "organisations.$.ack": true,
+              "registrations.$.ack": true,
               "userCreated": true,
             },
             $inc: { norganisations: 1 },
