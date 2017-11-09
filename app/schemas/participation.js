@@ -32,6 +32,7 @@ const ParticipationSchema = new Schema({
       required: true,
     },
   },
+  demo: Boolean,
   answer: {
     type: String,
     enum: values(eventStatus).concat([null]),

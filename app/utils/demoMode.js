@@ -145,6 +145,7 @@ module.exports = async function(organisationId, o) {
             fullname: `${u.firstname} ${u.lastname}`,
           },
           answer: answer,
+          demo: true
         }
       }))
     }
