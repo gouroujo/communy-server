@@ -5,9 +5,10 @@ const compression = require('compression');
 const { graphiqlExpress } = require('graphql-server-express');
 const OpticsAgent = require('optics-agent');
 
-const AuthMiddleware = require('./auth/middleware');
-const config = require('./config');
-const db = require('./db');
+const AuthMiddleware = require('auth/middleware');
+const config = require('config');
+const db = require('db');
+const logger = require('logger');
 
 const connection = db.mongoose.connection;
 const app = express();
@@ -45,8 +46,8 @@ app.use('/admin/demo', require('./admin/demo'));
 app.use('/admin/migration', require('./admin/migration'));
 
 
-connection.on('error', console.error.bind(console, 'connection error:'));
+connection.on('error', logger.error.bind(console, 'connection error:'));
 connection.once('open', function() {
   app.listen(config.get('PORT'));
-  console.log('Running a GraphQL API server at localhost:' + config.get('PORT') + '/graphql');
+  logger.info('Running a GraphQL API server at localhost:' + config.get('PORT') + '/graphql');
 });

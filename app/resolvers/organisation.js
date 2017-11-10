@@ -1,10 +1,7 @@
-const { find, pick, difference } = require('lodash');
-
 const config = require('../config');
 const { models, mongoose } = require('../db');
-const cloudinary = require('../cloudinary');
-
-const getFieldNames = require('../utils/getFields');
+const cloudinary = require('cloudinaryClient');
+const logger = require('logger');
 const signCloudinary = require('../utils/signCloudinary');
 
 module.exports = {
@@ -68,7 +65,7 @@ module.exports = {
       })
     },
 
-    registration(organisation, { userId }, { auth, currentUserId, loaders }, info) {
+    registration(organisation, { userId }, { auth, currentUserId, loaders }) {
       if (
         !auth ||
         (userId && userId !== currentUserId && !auth.check(`organisation:${organisation._id}:user_view`))
@@ -80,7 +77,7 @@ module.exports = {
       })
     },
 
-    registrations(organisation, { search, role, limit, offset, ack, confirm }, { auth }, info) {
+    registrations(organisation, { search, role, limit, offset, ack, confirm }, { auth }) {
       if (!auth || !auth.check(`organisation:${organisation._id}:user_list`)) return null;
 
       const query = models.Registration.find({
@@ -100,11 +97,38 @@ module.exports = {
         .exec();
     },
 
+    partnership(organisation, { networkId }, { auth, loaders }) {
+      if (
+        !auth || !auth.check(`organisation:${organisation._id}:partnership_view`)
+      ) return null;
+
+      return loaders.OrganisationPartnershipForNetwork(networkId).load(organisation._id)
+    },
+
+    partnerships(organisation, { search, limit, offset, ack, confirm}, { auth }) {
+      if (!auth || !auth.check(`organisation:${organisation._id}:partnership_list`)) return null;
+
+      const query = models.Partnership.find({
+        "organisation._id": organisation._id,
+      });
+
+      if (typeof search !== 'undefined' && search !== '') query.where('network.title').regex(new RegExp(search, 'i'))
+      if (typeof confirm !== 'undefined') query.where('confirm').equals(confirm)
+      if (typeof ack !== 'undefined') query.where('ack').equals(ack)
+
+      return query
+        .sort('network.title')
+        .limit(limit)
+        .skip(offset)
+        .lean()
+        .exec();
+    },
+
     nevents(organisation) {
       return organisation.nevents || 0
     },
 
-    events(organisation, { after, before, limit, offset }, { auth }, info) {
+    events(organisation, { after, before, limit, offset }, { auth }) {
       if (!auth || !auth.check(`organisation:${organisation._id}:event_list`)) return null;
 
       const query = models.Event.find({
@@ -159,14 +183,13 @@ module.exports = {
   },
 
   Query: {
-    organisations(_, { limit, offset }) {
-      return models.Organisation.find({
+    organisations(_, { limit, offset, search }) {
+      const query = models.Organisation.find({
         type: { "$ne": 'secret' }
-      })
-      .sort('title')
-      .skip(offset)
-      .limit(limit)
-      .lean();
+      });
+
+      if (typeof search !== 'undefined' && search !== '') query.where('title').regex(new RegExp(search, 'i'))
+      return query.sort('title').skip(offset).limit(limit).lean().exec();
     },
 
     organisation(_, { id }, { loaders }) {
@@ -185,5 +208,102 @@ module.exports = {
     addUsersToOrganisation: require('./mutations/addUsersOrganisation'),
     removeUserFromOrganisation: require('./mutations/removeUserOrganisation'),
     setRoleInOrganisation: require('./mutations/setRoleOrganisation'),
+
+    async addNetworkToOrganisation(_, {id, networkId }, { auth }) {
+      if (!auth) return null;
+      if (!auth.check(`organisation:${id}:add_network`)) return null;
+
+      try {
+        const [
+          network,
+          organisation
+        ] = await Promise.all([
+          models.Network.findById(networkId, '_id title').lean().exec(),
+          models.Organisation.findById(id, '_id title').lean().exec()
+        ])
+        if (!network || !organisation) return null;
+
+        await models.Partnership.create({
+          ack: true,
+          confirm: false,
+          organisation: {
+            _id: organisation._id,
+            title: organisation.title,
+          },
+          network: {
+            _id: network._id,
+            title: network.title,
+          },
+        });
+        return organisation;
+      } catch(e) {
+        logger.error(e);
+        return null
+      }
+    },
+    async removeNetworkToOrganisation(_, {id, networkId }, { auth }) {
+      if (!auth) return null;
+      if (!auth.check(`organisation:${id}:remove_network`)) return null;
+
+      try {
+        const partnership = await models.Partnership.findOne({
+          "organisation._id": id,
+          "network._id": networkId
+        });
+        if (!partnership) return null;
+
+        const [ organisation ] = await Promise.all([
+          models.Organisation.findByIdAndUpdate(id, {
+            $inc: {
+              nnetworks: (partnership.ack && partnership.confirm) ? -1 : 0
+            }
+          }, { new: true }).lean().exec(),
+          models.Network.updateOne(networkId, {
+            $inc: {
+              norganisations: (partnership.ack && partnership.confirm) ? -1 : 0
+            }
+          }).lean().exec(),
+          partnership.remove()
+        ]);
+
+        return organisation;
+      } catch(e) {
+        logger.error(e);
+        return null
+      }
+    },
+
+    async ackNetworkToOrganisation(_, {id, networkId }, { auth }) {
+      if (!auth) return null;
+      if (!auth.check(`organisation:${id}:confirm_network`)) return null;
+
+      try {
+        const partnership = await models.Partnership.findOne({
+          "organisation._id": id,
+          "network._id": networkId,
+          "ack": false,
+        }, '_id');
+        if (!partnership) return null;
+
+        const [ organisation ] = await Promise.all([
+          models.Organisation.findByIdAndUpdate(id, {
+            $inc: {
+              nnetworks: 1
+            }
+          }, { new: true }).lean().exec(),
+          models.Network.updateOne(networkId, {
+            $inc: {
+              norganisations: 1
+            }
+          }).lean().exec(),
+          partnership.update({ "ack": true })
+        ])
+
+        return organisation;
+      } catch(e) {
+        logger.error(e);
+        return null
+      }
+    }
   },
 }

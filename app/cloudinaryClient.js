@@ -1,7 +1,7 @@
 const cloudinary = require('cloudinary');
 const { promisify } = require('util');
-
-const config = require('./config');
+const logger = require('logger');
+const config = require('config');
 
 cloudinary.config({
   cloud_name: config.get('CLOUDINARY_CLOUD'),
@@ -14,7 +14,7 @@ module.exports = {
     return cloudinary.url(path, options)
   },
   upload(file, options) {
-    console.log(file)
+    logger.info(file)
     return promisify(cloudinary.v2.uploader.upload)(file, options)
   }
 }

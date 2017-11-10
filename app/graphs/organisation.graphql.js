@@ -1,5 +1,3 @@
-const Mailing = require('./mailing.graphql');
-
 const Organisation = /* GraphQL */`
 extend type Query {
   organisations (
@@ -7,6 +5,7 @@ extend type Query {
     limit: Int
     offset: Int
     role: OrganisationRole
+    search: String
   ): [Organisation!]
 
   organisation (
@@ -55,6 +54,21 @@ extend type Mutation {
   setRoleInOrganisation(
     id: ID!
     input: SetRoleInOrganisationInput!
+  ): Organisation!
+
+  addNetworkToOrganisation (
+    id: ID!
+    networkId: ID!
+  ): Organisation!
+
+  removeNetworkToOrganisation (
+    id: ID!
+    networkId: ID!
+  ): Organisation!
+
+  ackNetworkToOrganisation (
+    id: ID!
+    networkId: ID!
   ): Organisation!
 }
 
@@ -108,6 +122,17 @@ type Organisation {
   nconfirm: Int!
 
   mailings: [Mailing]
+
+  partnerships (
+    limit: Int
+    offset: Int
+  ): [Partnership!]
+  
+  partnership (
+    networkId: ID!
+  ): Partnership
+
+  nnetworks: Int
 }
 
 input OrganisationInput {
@@ -138,4 +163,4 @@ input SetRoleInOrganisationInput {
 }
 `;
 
-module.exports = () => [Organisation, Mailing]
+module.exports = () => [Organisation]

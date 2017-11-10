@@ -1,6 +1,6 @@
 const { get } = require('axios');
-const cloudinary = require('../cloudinary');
-const { models } = require('../db');
+// const cloudinary = require('cloudinaryClient');
+const { models } = require('db');
 
 module.exports = async function(user, options) {
   if (!options.facebookId) throw new Error('no facebook id')

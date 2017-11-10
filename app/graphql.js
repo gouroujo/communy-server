@@ -17,6 +17,10 @@ const executableSchema = makeExecutableSchema({
     require('./graphs/registration.graphql'),
     require('./graphs/mailing.graphql'),
     require('./graphs/message.graphql'),
+    require('./graphs/network.graphql'),
+    require('./graphs/membership.graphql'),
+    require('./graphs/partnership.graphql'),
+
   ],
   resolvers: require('./resolvers'),
 });

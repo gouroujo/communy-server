@@ -1,5 +1,5 @@
 const { models, mongoose } = require('../../db');
-const { orgStatus } = require('../../dict');
+const { roles } = require('../../dict');
 
 module.exports = async function(parent, { id }, { currentUserId, loaders }) {
   if (!currentUserId) return null;
@@ -81,7 +81,7 @@ module.exports = async function(parent, { id }, { currentUserId, loaders }) {
                 organisation: organisation.toObject(),
                 ack: true,
                 confirm: (organisation.type === 'public'),
-                role: (organisation.type === 'public') ? orgStatus.MEMBER : null,
+                role: (organisation.type === 'public') ? roles.MEMBER : null,
               },
             },
           }
@@ -95,7 +95,7 @@ module.exports = async function(parent, { id }, { currentUserId, loaders }) {
           },
           ack: true,
           confirm: (organisation.type === 'public'),
-          role: (organisation.type === 'public') ? orgStatus.MEMBER : null
+          role: (organisation.type === 'public') ? roles.MEMBER : null
         })
       ])
     })

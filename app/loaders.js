@@ -12,7 +12,7 @@ function createLoaderFor(model) {
     ])
     .then(results => {
       let offset = 0;
-      return ids.map((id, i) => {
+      return ids.map(id => {
         if (results[offset] && (String(id) === String(results[offset]._id))) {
           offset = offset + 1;
           return results[offset - 1];
@@ -24,11 +24,49 @@ function createLoaderFor(model) {
   }, { cacheKeyFn: key => String(key)})
 }
 
+function createJoinLoaderFor(model, targetId, targetKey, modelKey) {
+  return new DataLoader(networkIds => {
+    const castedIds = networkIds
+      .map(id => mongoose.Types.ObjectId(id))
+    return model.aggregate([
+      {$match: {[`${modelKey}._id`]: {$in: castedIds}, [`${targetKey}._id`]: mongoose.Types.ObjectId(targetId)}},
+      {$addFields: {"__order": {$indexOfArray: [castedIds, `$${modelKey}._id` ]}}},
+      {$sort: {"__order": 1}}
+    ])
+    .then(results => {
+      let offset = 0;
+      return networkIds.map(id => {
+        if (results[offset] && (String(id) === String(results[offset][modelKey]._id))) {
+          offset = offset + 1;
+          return results[offset - 1];
+        } else {
+          return null;
+        }
+      })
+    })
+  }, { cacheKeyFn: key => String(key)})
+}
+
+function createJoinLoaderMapFor(model, targetKey, modelKey, mapInstance) {
+  return (targetId) => {
+    if (!mapInstance.has(targetId)) {
+      mapInstance.set(targetId, createJoinLoaderFor(model, targetId, targetKey, modelKey))
+    }
+    return mapInstance.get(targetId);
+  }
+}
+
 module.exports =  function(userId) {
   const EventParticipationLoaders = new Map();
+  const UserMembershipLoaders = new Map();
+  const NetworkPartnershipLoaders = new Map();
+  const OrganisationPartnershipLoaders = new Map();
+
   return {
     Event: createLoaderFor(models.Event),
     Organisation: createLoaderFor(models.Organisation),
+    Network: createLoaderFor(models.Network),
+    Membership: createLoaderFor(models.Membership),
     Registration: createLoaderFor(models.Registration),
     RegistrationLink: new DataLoader(([ params ]) => {
       return models.Registration.findOne(params)
@@ -38,50 +76,10 @@ module.exports =  function(userId) {
     Mailing: createLoaderFor(models.Mailing),
     User: createLoaderFor(models.User),
     Participation: createLoaderFor(models.Participation),
-    UserEventParticipation: new DataLoader(eventIds => {
-      const castedIds = eventIds
-        .map(id => mongoose.Types.ObjectId(id))
-      return models.Participation.aggregate([
-        {$match: {"event._id": {$in: castedIds}, "user._id": mongoose.Types.ObjectId(userId)}},
-        {$addFields: {"__order": {$indexOfArray: [castedIds, "$event._id" ]}}},
-        {$sort: {"__order": 1}}
-      ])
-      .then(participations => {
-        let offset = 0;
-        return eventIds.map((id, i) => {
-          if (participations[offset] && (String(id) === String(participations[offset].event._id))) {
-            offset = offset + 1;
-            return participations[offset - 1];
-          } else {
-            return null;
-          }
-        })
-      })
-    }, { cacheKeyFn: key => String(key)}),
-    UserParticipationForEvent: (eventId) => {
-      if (!EventParticipationLoaders.has(eventId)) {
-        EventParticipationLoaders.set(eventId, new DataLoader(userIds => {
-          const castedIds = userIds
-            .map(id => mongoose.Types.ObjectId(id))
-          return models.Participation.aggregate([
-            {$match: {"user._id": {$in: castedIds}, "event._id": mongoose.Types.ObjectId(eventId)}},
-            {$addFields: {"__order": {$indexOfArray: [castedIds, "$user._id" ]}}},
-            {$sort: {"__order": 1}}
-          ])
-          .then(participations => {
-            let offset = 0;
-            return userIds.map((id, i) => {
-              if (participations[offset] && (String(id) === String(participations[offset].user._id))) {
-                offset = offset + 1;
-                return participations[offset - 1];
-              } else {
-                return null;
-              }
-            })
-          })
-        }, { cacheKeyFn: key => String(key)}))
-      }
-      return EventParticipationLoaders.get(eventId);
-    }
+    CurrentUserParticipation: createJoinLoaderFor(models.Participation, userId, 'user', 'event'),
+    UserParticipationForEvent: createJoinLoaderMapFor(models.Participation, 'event', 'user', EventParticipationLoaders),
+    NetworkMembershipForUser: createJoinLoaderMapFor(models.Membership, 'user', 'network', UserMembershipLoaders),
+    OrganisationPartnershipForNetwork: createJoinLoaderMapFor(models.Partnership, 'network', 'organisation', NetworkPartnershipLoaders),
+    NetworkPartnershipForOrganisation: createJoinLoaderMapFor(models.Partnership, 'organisation', 'network', OrganisationPartnershipLoaders),
   }
 }

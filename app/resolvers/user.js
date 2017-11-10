@@ -1,9 +1,9 @@
 const { omit, sample } = require('lodash');
-const { models } = require('../db');
-const cloudinary = require('../cloudinary');
+const { models } = require('db');
+const cloudinary = require('cloudinaryClient');
+const logger = require('logger');
 
-// const memcached = require('../memcached');
-const linkFacebook = require('../utils/linkFacebook');
+const linkFacebook = require('utils/linkFacebook');
 
 const demoAvatars = [
   'demo/ade.jpg',
@@ -70,8 +70,11 @@ module.exports = {
       })
     },
 
-    registrations(user, { role, limit, offset }, { getField }) {
+    registrations(user, params, { getField }) {
       return getField('registrations', user, 'User');
+    },
+    memberships(user, params, { getField }) {
+      return getField('memberships', user, 'User');
     },
 
     participations(user, { before, after, limit, offset, organisationId, answer }, { auth, currentUserId }) {
@@ -103,7 +106,7 @@ module.exports = {
 
         return participation;
       } catch(e) {
-        console.log(e);
+        logger.error(e);
         return null;
       }
     },
@@ -125,7 +128,7 @@ module.exports = {
       })
     },
 
-    avatar(user, { width, height, radius }) {
+    avatar(user) {
       if (!user._id) return null;
       if (user.demo) {
         return cloudinary.url(sample(demoAvatars),{
@@ -145,7 +148,7 @@ module.exports = {
   },
 
   Query: {
-    user(parent, { id, organisationId }, { auth, loaders }) {
+    user(parent, { id }, { auth, loaders }) {
       if (!auth) return null;
       return loaders.User.load(id);
     },
@@ -177,7 +180,7 @@ module.exports = {
   },
 
   Mutation: {
-    async editUser(parent, { id, input }, { currentUserId, loaders }) {
+    async editUser(parent, { input }, { currentUserId }) {
       if (!currentUserId) return null;
       // TODO: id is not used at the moment
       const currentUser = await models.User.findById(currentUserId)
@@ -206,7 +209,7 @@ module.exports = {
         )
       ])
       .then(() => currentUser)
-      .catch(e => console.log(e));
+      .catch(e => logger.warn(e));
       // memcached.replace(user._id, user.toObject(), memcached.USER_CACHE_LIFETIME)
     },
   }

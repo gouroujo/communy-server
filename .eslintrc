@@ -1,0 +1,11 @@
+{
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "parser": "babel-eslint",
+    "extends": ["eslint:recommended"],
+    "rules": {
+      "no-irregular-whitespace": 0
+      }
+}

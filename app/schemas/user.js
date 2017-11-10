@@ -1,11 +1,11 @@
 const { Schema } = require('mongoose');
 const { pbkdf2, randomBytes, timingSafeEqual } = require('crypto');
 const { sign, verify } = require('jsonwebtoken');
-
 const { values } = require('lodash')
-const config = require('../config');
-const { orgPermissions, orgStatus } = require('../dict');
-const pubsub = require('../utils/pubsub');
+
+const config = require('config');
+const { roles } = require('dict');
+const pubsub = require('utils/pubsub');
 
 const signAsync = (data, secret, options) => {
   return new Promise((resolve, reject) => {
@@ -31,16 +31,53 @@ const generateSalt = () => new Promise((resolve, reject) => {
 });
 
 const SubOrganisationSchema = new Schema({
-  title: { type: String, required: true },
-  _id: { type: Schema.Types.ObjectId, ref: 'Organisation', required: true },
+  title:  {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  _id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organisation',
+    required: true
+  },
 }, { _id: false });
 
 const SubRegistrationSchema = new Schema({
-  _id: { type: Schema.Types.ObjectId, ref: 'Registration', required: true },
+  _id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Registration',
+    required: true
+  },
   organisation: SubOrganisationSchema,
   role: {
     type: String,
-    enum: values(orgStatus).concat([null]),
+    enum: values(roles).concat([null]),
+    default: null,
+  },
+  ack: { type: Boolean, default: false },
+  confirm: { type: Boolean, default: false },
+}, { _id: false });
+
+const SubNetworkSchema = new Schema({
+  title:  {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  _id: { type: Schema.Types.ObjectId, ref: 'Network', required: true },
+}, { _id: false });
+
+const SubMembershipSchema = new Schema({
+  _id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Membership',
+    required: true,
+  },
+  network: SubNetworkSchema,
+  role: {
+    type: String,
+    enum: values(roles).concat([null]),
     default: null,
   },
   ack: { type: Boolean, default: false },
@@ -79,7 +116,12 @@ const UserSchema = new Schema({
     type: [SubRegistrationSchema],
     default: [],
   },
+  memberships: {
+    type: [SubMembershipSchema],
+    default: [],
+  },
   norganisations: { type: Number, default: 0 },
+  nnetworks: { type: Number, default: 0 },
 }, {
   timestamps: true
 });

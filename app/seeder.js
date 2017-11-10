@@ -3,7 +3,7 @@ var faker = require('faker');
 var moment = require('moment');
 
 const { models, mongoose } = require('./db');
-const { eventStatus, orgStatus } = require('./dict');
+const { answers, roles } = require('./dict');
 
 faker.locale = "fr";
 
@@ -45,7 +45,7 @@ var organisations = lodash.times(nOrgs, function(i) {
   }
 
   // org.users = selectedUsers.map((u, i) => {
-  //   const st = (i === 0) ? orgStatus.ADMIN : lodash.sample(lodash.values(orgStatus));
+  //   const st = (i === 0) ? roles.ADMIN : lodash.sample(lodash.values(roles));
   //   u.organisations.push({
   //     title: org.title,
   //     logoUrl: org.logoUrl,
@@ -93,7 +93,7 @@ var organisations = lodash.times(nOrgs, function(i) {
     }
 
     // event.users = userEvent.map((u, i) => {
-    //   const st = lodash.sample(lodash.values(eventStatus));
+    //   const st = lodash.sample(lodash.values(answers));
     //   u.events.push({
     //     title: event.title,
     //     status: st,

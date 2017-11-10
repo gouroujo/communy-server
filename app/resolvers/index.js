@@ -5,7 +5,7 @@ const { Kind } =  require('graphql/language');
 
 const { GraphQLDate, GraphQLTime, GraphQLDateTime} = require('graphql-iso-date');
 
-const { orgStatus, eventStatus } = require('../dict');
+const { roles, answers } = require('../dict');
 
 const event = require('./event');
 const organisation = require('./organisation');
@@ -14,6 +14,9 @@ const registration = require('./registration');
 const mailing = require('./mailing');
 const message = require('./message');
 const participation = require('./participation');
+const network = require('./network');
+const membership = require('./membership');
+const partnership = require('./partnership');
 
 const index = {
   Date: GraphQLDate,
@@ -22,20 +25,20 @@ const index = {
   // OrganisationRole: new GraphQLEnumType({
   //   name: 'OrganisationStatus',
   //   description: 'User registration role in an organisation (enum)',
-  //   values: Object.keys(orgStatus).reduce((acc, key) => Object.assign(acc, { [key]: { value: orgStatus[key] } } ), {}),
+  //   values: Object.keys(roles).reduce((acc, key) => Object.assign(acc, { [key]: { value: roles[key] } } ), {}),
   // }),
   OrganisationRole: new GraphQLScalarType({
     name: 'OrganisationRole',
     description: 'User registration role in an organisation (enum)',
     serialize(value) {
-      const result = Object.keys(orgStatus).find(v => orgStatus[v] === value);
+      const result = Object.keys(roles).find(v => roles[v] === value);
       return result || null;
     },
     parseValue(value) {
-      return orgStatus[value] || null;
+      return roles[value] || null;
     },
     parseLiteral(ast) {
-      if (orgStatus[ast.value]) return orgStatus[ast.value];
+      if (roles[ast.value]) return roles[ast.value];
       return null;
     }
   }),
@@ -43,17 +46,17 @@ const index = {
     name: 'EventAnswer',
     description: 'User participation answer to an event (enum)',
     serialize(value) {
-      const result = Object.keys(eventStatus).find(v => eventStatus[v] === value);
+      const result = Object.keys(answers).find(v => answers[v] === value);
       return result || null;
     },
     parseValue(value) {
-      return eventStatus[value] || null;
+      return answers[value] || null;
     },
     parseLiteral(ast) {
-      if (eventStatus[ast.value]) return eventStatus[ast.value];
+      if (answers[ast.value]) return answers[ast.value];
       return null;
     }
-    // values: Object.keys(eventStatus).reduce((acc, key) => Object.assign(acc, { [key]: { value: eventStatus[key] } } ), {}),
+    // values: Object.keys(answers).reduce((acc, key) => Object.assign(acc, { [key]: { value: answers[key] } } ), {}),
   }),
   Query: {
     version: () => '0.0.1',
@@ -63,4 +66,4 @@ const index = {
   }
 };
 
-module.exports = merge(index, event, organisation, user, registration, mailing, message, participation);
+module.exports = merge(index, event, organisation, user, registration, mailing, message, participation, network, partnership, membership);

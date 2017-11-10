@@ -1,8 +1,9 @@
-const { models, mongoose } = require('../../db');
-const { orgStatus } = require('../../dict');
-const config = require('../../config');
+const { models, mongoose } = require('db');
+const logger = require('logger');
+const { roles } = require('dict');
+const config = require('config');
 
-const pubsub = require('../../utils/pubsub');
+const pubsub = require('utils/pubsub');
 
 module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
   if (!auth) return new Error('Unauthorized');
@@ -27,6 +28,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
             lastname: user.lastname,
             userCreated: false,
             norganisations: 0,
+            nnetworks: 0,
           },
         },
         upsert: true,
@@ -54,7 +56,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
                 title: organisation.title,
               },
               confirm: true,
-              role: orgStatus.MEMBER,
+              role: roles.MEMBER,
             }
           }
         }),
@@ -67,7 +69,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
         }, {
           $set: {
             "registrations.$.confirm": true,
-            "registrations.$.role": orgStatus.MEMBER
+            "registrations.$.role": roles.MEMBER
           },
           $inc: { norganisations: 1 },
         }),
@@ -81,7 +83,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
             update: {
               $set : {
                 confirm: true,
-                role: orgStatus.MEMBER,
+                role: roles.MEMBER,
                 updatedAt: date,
               },
               $setOnInsert: {
@@ -116,7 +118,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
   // 6 - Send the invitation emails
   .then(([organisation, users]) => {
     if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      console.log('No pubsub topic defined to send invitation emails. messages not send');
+      logger.info('No pubsub topic defined to send invitation emails. messages not send');
       return organisation;
     }
     return Promise.all([
@@ -144,7 +146,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
     })
   })
   .catch(e => {
-    console.log(e);
+    logger.warn(e);
     throw new Error('Bad Request')
   });
 }

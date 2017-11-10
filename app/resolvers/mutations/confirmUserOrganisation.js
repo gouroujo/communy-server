@@ -2,7 +2,7 @@ const config = require('../../config');
 
 const { models } = require('../../db');
 
-const { orgStatus } = require('../../dict');
+const { roles } = require('../../dict');
 const pubsub = require('../../utils/pubsub');
 
 module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
@@ -21,7 +21,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
       {
         $set: {
           "registrations.$.confirm": true,
-          "registrations.$.role": orgStatus.MEMBER
+          "registrations.$.role": roles.MEMBER
         },
         $inc: { norganisations: 1 },
       }
@@ -33,7 +33,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
       },
       {
         confirm: true,
-        role: orgStatus.MEMBER,
+        role: roles.MEMBER,
         updatedAt: new Date()
       }
     )

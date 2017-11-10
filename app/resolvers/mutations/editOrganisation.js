@@ -15,7 +15,7 @@ module.exports = function (parent, { id, input }, { auth, loaders }) {
     }),
     models.User.updateMany({
       "registrations": {
-        $elemMatch: { "organisation_id": id }
+        $elemMatch: { "organisation._id": id }
       }
     }, {
       $set: {

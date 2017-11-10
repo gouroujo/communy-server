@@ -42,6 +42,15 @@ type User {
     offset: Int
   ): [Registration!]!
 
+  memberships (
+    limit: Int
+    offset: Int
+  ): [Membership!]
+
+  membership (
+    networkId: ID!
+  ): Membership
+
   norganisations (
     role: OrganisationRole
   ): Int!
@@ -49,7 +58,7 @@ type User {
   participation (
     eventId: ID!
   ): Participation
-  
+
   participations (
     organisationId: ID
     after: Date

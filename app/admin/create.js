@@ -1,8 +1,9 @@
-const cloudinary = require('../cloudinary');
-const config = require('../config');
-const models = require('../db').models;
-const createOrganisation = require('../resolvers/organisation').Mutation.createOrganisation;
+const cloudinary = require('cloudinaryClient');
+const config = require('config');
+const models = require('db').models;
+const createOrganisation = require('resolvers/organisation').Mutation.createOrganisation;
 const { sign } = require('jsonwebtoken');
+const logger = require('logger');
 
 module.exports = async function(req, res) {
   if (!config.get('ADMIN_PASSWORD')) return res.sendStatus(401);
@@ -13,7 +14,6 @@ module.exports = async function(req, res) {
     user,
   } = req.body;
 
-  let token;
   try {
     const u = await models.User.create(user);
     const o = await createOrganisation(null, { input: {
@@ -51,7 +51,7 @@ module.exports = async function(req, res) {
     res.status(201).json({ token })
 
   } catch (e) {
-    console.log(e)
+    logger.errror(e)
     res.status(500).send(e.message);
   }
 }

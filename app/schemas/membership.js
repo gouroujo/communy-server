@@ -2,45 +2,28 @@ const { Schema } = require('mongoose');
 const { values } = require('lodash')
 const { roles } = require('dict');
 
-const RegistrationSchema = new Schema({
+const MembershipSchema = new Schema({
   user: {
     _id: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    fullname: {
-      type: String,
-      trim: true,
-      index: true
-    },
-  },
-  organisation: {
-    _id: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organisation',
-      required: true,
-    },
-    title:  {
+    fullname:  {
       type: String,
       required: true,
       trim: true,
+      index:true,
     },
   },
   network: {
     _id: {
       type: Schema.Types.ObjectId,
-      ref: 'Organisation',
-      index: true,
-      sparse: true,
-    },
-    title:  {
-      type: String,
+      ref: 'Network',
       required: true,
-      trim: true,
     },
+    title:  { type: String },
   },
-  demo: Boolean,
   confirm: {
     type: Boolean,
     default: false,
@@ -56,11 +39,10 @@ const RegistrationSchema = new Schema({
     enum: values(roles).concat([null]),
     default: null
   },
-  // activities: [],
 }, {
   timestamps: true
 });
 
-RegistrationSchema.index({ 'user._id': 1, 'organisation._id': 1 }, { unique: true });
+MembershipSchema.index({ 'user._id': 1, 'network._id': 1 }, { unique: true });
 
-module.exports = RegistrationSchema;
+module.exports = MembershipSchema;

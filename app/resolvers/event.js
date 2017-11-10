@@ -1,8 +1,7 @@
-const { omit, difference } = require('lodash');
 const moment = require('moment');
-const { mongoose, models } = require('../db');
-const getFieldNames = require('../utils/getFields');
-const geocoder = require('../utils/geocoder');
+const { models } = require('../db');
+const geocoder = require('utils/geocoder');
+const logger = require('logger');
 
 module.exports = {
 
@@ -43,9 +42,9 @@ module.exports = {
     },
 
     async participation(event, { userId }, { loaders, auth, currentUserId }) {
-      if (!currentUserId) return niull;
+      if (!currentUserId) return null;
       if (!userId) {
-        return loaders.UserEventParticipation.load(event._id)
+        return loaders.CurrentUserParticipation.load(event._id)
       }
 
       try {
@@ -57,12 +56,12 @@ module.exports = {
 
         return participation;
       } catch(e) {
-        console.log(e);
+        logger.info(e);
         return null;
       }
     },
 
-    participations(event, { offset, limit, yes, no, mb }, { auth }) {
+    participations(event, { offset, limit, yes, no, mb }) {
       // TODO: store the last 50/100 participations in event document
       const query = models.Participation.find({ "event._id": event._id });
 
@@ -114,7 +113,7 @@ module.exports = {
 
         return event;
       } catch (e) {
-        console.log(e);
+        logger.error(e);
         return null;
       }
     },
@@ -135,7 +134,7 @@ module.exports = {
           const address = await geocoder(input.address, language)
           newEvent.address = Object.assign({}, address, input.address)
         } catch (e) {
-          console.log(e)
+          logger.error(e)
         }
       }
 
@@ -181,12 +180,12 @@ module.exports = {
         return null;
 
       } catch (e) {
-        console.log(e);
+        logger.error(e);
         return null;
       }
     },
 
-    async addUserToEvent(parent, { id, input }, { permissions, loaders, auth, currentUserId }) {
+    async addUserToEvent(parent, { id, input }, { loaders, auth, currentUserId }) {
       if (!auth) return null;
 
       try {
@@ -256,7 +255,7 @@ module.exports = {
         return updatedEvent;
 
       } catch (e) {
-        console.log(e);
+        logger.error(e);
         return null;
       }
     }

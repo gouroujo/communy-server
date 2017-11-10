@@ -2,9 +2,8 @@ const { models, mongoose } = require('../db');
 const lodash = require('lodash');
 const faker = require('faker');
 var moment = require('moment');
-const cloudinary = require('../cloudinary');
 
-const { eventStatus, orgStatus } = require('../dict');
+const { roles } = require('../dict');
 
 faker.locale = "fr";
 
@@ -29,7 +28,7 @@ const eventsName = [
   'Découverte de la région'
 ]
 
-module.exports = async function(organisationId, o) {
+module.exports = async function (organisationId, o) {
   const options = Object.assign({
     users: 50,
     events: 20,
@@ -59,7 +58,7 @@ module.exports = async function(organisationId, o) {
           _id: organisation._id,
           title: organisation.title,
         },
-        role: confirm ? lodash.sample(lodash.values(orgStatus)) : null,
+        role: confirm ? lodash.sample(lodash.values(roles)) : null,
         ack: ack,
         confirm: confirm,
       }]
@@ -145,7 +144,7 @@ module.exports = async function(organisationId, o) {
             fullname: `${u.firstname} ${u.lastname}`,
           },
           answer: answer,
-          demo: true
+          demo: true,
         }
       }))
     }

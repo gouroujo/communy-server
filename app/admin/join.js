@@ -1,8 +1,8 @@
-const cloudinary = require('../cloudinary');
-const pubsub = require('../utils/pubsub');
-const config = require('../config');
-const models = require('../db').models;
-const createOrganisation = require('../resolvers/organisation').Mutation.createOrganisation;
+const cloudinary = require('cloudinaryClient');
+const pubsub = require('utils/pubsub');
+const config = require('config');
+const models = require('db').models;
+const createOrganisation = require('resolvers/organisation').Mutation.createOrganisation;
 
 module.exports = function(req, res) {
   if (!config.get('ADMIN_PASSWORD')) return res.sendStatus(401);

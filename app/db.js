@@ -8,7 +8,9 @@ const ParticipationSchema = require('./schemas/participation');
 const EventSchema = require('./schemas/event');
 const MailingSchema = require('./schemas/mailing');
 const MessageSchema = require('./schemas/message');
-const MigrationSchema = require('./schemas/migration');
+const NetworkSchema = require('./schemas/network');
+const PartnershipSchema = require('./schemas/partnership');
+const MembershipSchema = require('./schemas/membership');
 
 mongoose.Promise = global.Promise;
 
@@ -21,7 +23,9 @@ const db = {
     Event: mongoose.model('Event', EventSchema),
     Mailing: mongoose.model('Mailing', MailingSchema),
     Message: mongoose.model('Message', MessageSchema),
-    Migration: mongoose.model('Migration', MigrationSchema),
+    Network: mongoose.model('Network', NetworkSchema),
+    Partnership: mongoose.model('Partnership', PartnershipSchema),
+    Membership: mongoose.model('Membership', MembershipSchema),
   },
   mongoose: mongoose,
 }
