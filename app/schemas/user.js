@@ -122,6 +122,7 @@ const UserSchema = new Schema({
   },
   norganisations: { type: Number, default: 0 },
   nnetworks: { type: Number, default: 0 },
+  nunreadMessage: { type: Number, default: 0 },
 }, {
   timestamps: true
 });

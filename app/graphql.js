@@ -1,11 +1,11 @@
 const { graphqlExpress } = require('graphql-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
 const OpticsAgent = require('optics-agent');
-const { verify } = require('jsonwebtoken');
 
-const config = require('./config');
-const createLoaders = require('./loaders');
-const verifyAsync = require('util').promisify(verify);
+const config = require('config');
+const createLoaders = require('loaders');
+const db = require('db');
+const logger = require('logger');
 
 const executableSchema = makeExecutableSchema({
   typeDefs: [
@@ -35,6 +35,9 @@ module.exports = graphqlExpress((req, res) => {
     schema: executableSchema,
     context: {
       opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
+      logger: logger,
+      config: config,
+      models: db.models,
       currentUserId: res.locals.userId,
       auth: res.locals.auth,
       loaders: loaders,
@@ -48,7 +51,7 @@ module.exports = graphqlExpress((req, res) => {
             return field;
           })
           .catch(e => {
-            console.log(e);
+            logger.error(e);
             return null
           })
       },

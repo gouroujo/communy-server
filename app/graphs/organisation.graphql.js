@@ -28,14 +28,6 @@ extend type Mutation {
     id: ID!,
   ): Organisation
 
-  joinOrganisation (
-    id: ID!
-  ) : Organisation!
-
-  leaveOrganisation (
-    id: ID!
-  ) : Organisation!
-
   confirmUserToOrganisation (
     id: ID!
     input: ConfirmUserOrganisationInput!
@@ -46,14 +38,14 @@ extend type Mutation {
     input: AddUsersToOrganisationInput!
   ): Organisation!
 
-  removeUserFromOrganisation (
+  removeUserToOrganisation (
     id: ID!
-    input: RemoveUserFromOrganisationInput!
+    input: RemoveUserToOrganisationInput!
   ): Organisation!
 
-  setRoleInOrganisation(
+  setUserRoleToOrganisation(
     id: ID!
-    input: SetRoleInOrganisationInput!
+    input: setUserRoleToOrganisationInput!
   ): Organisation!
 
   addNetworkToOrganisation (
@@ -126,8 +118,11 @@ type Organisation {
   partnerships (
     limit: Int
     offset: Int
+    ack: Boolean
+    confirm: Boolean
+    search: String
   ): [Partnership!]
-  
+
   partnership (
     networkId: ID!
   ): Partnership
@@ -153,13 +148,19 @@ input AddUsersToOrganisationInput {
   message: String
 }
 
-input RemoveUserFromOrganisationInput {
+input RemoveUserToOrganisationInput {
   userId: ID!
 }
 
-input SetRoleInOrganisationInput {
+input setUserRoleToOrganisationInput {
   userId: ID!
   role: OrganisationRole!
+}
+
+input OrganisationUserInput {
+  email: String!
+  firstname: String
+  lastname: String
 }
 `;
 

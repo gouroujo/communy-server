@@ -11,7 +11,8 @@ module.exports = function (userIds, organisationId) {
             registrations: {
                 $elemMatch: { "organisation._id": organisationId },
                 $size: 1,
-            }
+            },
+            "memberships.0": { $exists : false }
           }
         }
       },

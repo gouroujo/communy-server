@@ -19,6 +19,10 @@ const NetworkSchema = new Schema({
   demo: Boolean,
   nusers: { type: Number, default: 0, required: true },
   norganisations: { type: Number, default: 0, required: true },
+  nusers_wt_confirm: { type: Number, default: 0, required: true },
+  nusers_wt_ack: { type: Number, default: 0, required: true },
+  norg_wt_confirm: { type: Number, default: 0, required: true },
+  norg_wt_ack: { type: Number, default: 0, required: true },
 }, {
   timestamps: true
 });

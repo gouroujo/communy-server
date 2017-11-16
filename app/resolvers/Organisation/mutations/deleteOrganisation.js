@@ -1,6 +1,5 @@
-const { models } = require('../../db');
 
-module.exports = async function (parent, { id }, { auth }) {
+module.exports = async function (parent, { id }, { auth, models }) {
   if (!auth) return null;
   if (!auth.check(`organisation:${id}:delete`)) return null;
 
@@ -56,7 +55,7 @@ module.exports = async function (parent, { id }, { auth }) {
     console.log(events);
 
     return null;
-    
+
   } catch (e) {
     console.log(e);
     return null;

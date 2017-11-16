@@ -1,15 +1,17 @@
 const { Schema } = require('mongoose');
 const AddressSchema = require('./address');
 
-const SubUserSchema = new Schema({
-  firstname: String,
-  lastname: String,
-  email: String,
+const SubNetworkSchema = new Schema({
   _id: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
-    index: true,
-  } // user id
+    ref: 'Network',
+    required: true,
+  },
+  title:  {
+    type: String,
+    required: true,
+    trim: true,
+  },
 });
 
 const EventSchema = new Schema({
@@ -27,6 +29,7 @@ const EventSchema = new Schema({
     },
     title: String,
   },
+  networks: [SubNetworkSchema],
   demo: Boolean,
   nanswers: { type: Number, default: 0 },
   nyes: { type: Number, default: 0 },

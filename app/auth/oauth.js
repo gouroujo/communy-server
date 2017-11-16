@@ -2,13 +2,13 @@ const { get } = require('axios');
 const models = require('../db').models;
 const config = require('../config');
 
-const joinOrganisation = require('../resolvers/mutations/joinOrganisation');
+// const joinOrganisation = require('../resolvers/mutations/joinOrganisation');
 
 module.exports = function (req, res) {
   const {
     userID,
     accessToken,
-    provider
+    // provider
   } = req.body;
   get(`https://graph.facebook.com/v2.9/${userID}?fields=id,first_name,last_name,picture,email&access_token=${accessToken}`)
     .then(response => {
@@ -33,13 +33,13 @@ module.exports = function (req, res) {
             confirm: true,
             userCreated: true,
           })
-          .then(user => {
-            return (config.get('DEFAULT_ORG_ID') ? (
-              joinOrganisation(null, { id: config.get('DEFAULT_ORG_ID')}, { currentUser: user })
-            ) : Promise.resolve())
-            .catch(e => console.log(e))
-            .then(() => user)
-          })
+          // .then(user => {
+          //   return (config.get('DEFAULT_ORG_ID') ? (
+          //     joinOrganisation(null, { id: config.get('DEFAULT_ORG_ID')}, { currentUser: user })
+          //   ) : Promise.resolve())
+          //   .catch(e => console.log(e))
+          //   .then(() => user)
+          // })
           .then(user => user.getToken())
           .then(token => {
             return res.append('Authorization', token).sendStatus(201);

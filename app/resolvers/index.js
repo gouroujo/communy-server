@@ -1,20 +1,19 @@
 const { merge } = require('lodash');
 
 const { GraphQLScalarType } = require('graphql');
-const { Kind } =  require('graphql/language');
 
 const { GraphQLDate, GraphQLTime, GraphQLDateTime} = require('graphql-iso-date');
 
-const { roles, answers } = require('../dict');
+const { roles, answers } = require('dict');
 
-const event = require('./event');
-const organisation = require('./organisation');
-const user = require('./user');
+const event = require('./Event');
+const organisation = require('./Organisation');
+const user = require('./User');
 const registration = require('./registration');
 const mailing = require('./mailing');
 const message = require('./message');
 const participation = require('./participation');
-const network = require('./network');
+const network = require('./Network');
 const membership = require('./membership');
 const partnership = require('./partnership');
 

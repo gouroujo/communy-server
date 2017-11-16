@@ -61,8 +61,18 @@ extend type Mutation {
   ): Network!
 
   deleteNetwork (
-    id: NetworkInput
+    id: ID!
   ): Network
+
+  confirmUserToNetwork (
+    id: ID!
+    userId: ID!
+  ): Network!
+
+  removeUserToNetwork (
+    id: ID!
+    userId: ID!
+  ): Network!
 
   addUsersToNetwork (
     id: ID!
@@ -93,8 +103,14 @@ input NetworkInput {
 }
 
 input AddUsersToNetworkInput {
-  users: [OrganisationUserInput!]!
+  users: [NetworkUserInput!]!
   message: String
+}
+
+input NetworkUserInput {
+  email: String!
+  firstname: String
+  lastname: String
 }
 `;
 

@@ -1,18 +1,6 @@
 const User = /* GraphQL */`
 extend type Query {
-  users (
-    organisationId: ID!
-    search: String
-    limit: Int
-    offset: Int
-  ): [User!]
-
-  user (
-    id: ID!
-    organisationId: ID!
-  ): User
-
-  me: User
+  user: User
 }
 
 extend type Mutation {
@@ -20,6 +8,23 @@ extend type Mutation {
     id: ID!
     input: UserInput!
   ): User!
+
+  linkFacebookToUser (
+    id: ID!
+    input: linkFacebookToUserInput!
+  ): User!
+
+  joinOrganisationToUser (
+    organisationId: ID!
+  ) : User!
+
+  ackOrganisationToUser (
+    organisationId: ID!
+  ) : User!
+
+  leaveOrganisationToUser (
+    organisationId: ID!
+  ) : User!
 }
 
 type User {
@@ -29,6 +34,7 @@ type User {
   fullname: String
   email: String
   avatar: String
+  avatarUploadOpts: String
   birthday: Date
   birthplace: String
   phone1: String
@@ -42,18 +48,21 @@ type User {
     offset: Int
   ): [Registration!]!
 
+  registration (
+    organisationId: ID!
+  ): Registration
+
   memberships (
     limit: Int
     offset: Int
-  ): [Membership!]
+  ): [Membership!]!
 
   membership (
     networkId: ID!
   ): Membership
 
-  norganisations (
-    role: OrganisationRole
-  ): Int!
+  norganisations: Int!
+  nnetworks: Int!
 
   participation (
     eventId: ID!
@@ -80,7 +89,7 @@ type User {
     limit: Int
     offset: Int
   ): [Message!]
-  nunreadMessage: Int!
+  nunreadMessage: Int
 }
 
 input UserInput {
@@ -88,18 +97,15 @@ input UserInput {
   lastname: String
   email: String
   password: String
-  facebookId: String
-  facebookAccessToken: String
   birthday: Date
   birthplace: String
   phone1: String
   phone2: String
 }
 
-input OrganisationUserInput {
-  email: String!
-  firstname: String
-  lastname: String
+input linkFacebookToUserInput {
+  facebookId: String!
+  facebookAccessToken: String!
 }
 `;
 

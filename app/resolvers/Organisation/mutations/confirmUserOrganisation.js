@@ -1,11 +1,7 @@
-const config = require('../../config');
+const { roles } = require('dict');
+const pubsub = require('utils/pubsub');
 
-const { models } = require('../../db');
-
-const { roles } = require('../../dict');
-const pubsub = require('../../utils/pubsub');
-
-module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
+module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders, config, models, logger }) {
   if (!auth) return new Error('Unauthorized');
   if (!auth.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
   const currentUser = await loaders.User.load(currentUserId);
@@ -48,7 +44,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
     })
     .then(organisation => {
       if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-        console.log('No pubsub topic defined to send invitation emails. messages not send');
+        logger.info('No pubsub topic defined to send invitation emails. messages not send');
         return organisation;
       }
       return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
@@ -74,7 +70,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
     })
   })
   .catch(e => {
-    console.log(e);
+    logger.error(e);
     throw new Error('Bad Request')
   });
 }

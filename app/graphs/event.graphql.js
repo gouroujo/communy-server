@@ -69,6 +69,11 @@ type Event {
   participation (
     userId: ID
   ): Participation
+
+  networks (
+    limit: Int
+    offset: Int
+  ): [Network!]
 }
 
 input EventInput {
@@ -78,6 +83,8 @@ input EventInput {
   startTime: DateTime!
   endTime: DateTime!
   allDay: Boolean
+  networkIds: [ID!]
+  allNetwork: Boolean
 }
 
 input addUserToEventInput {
