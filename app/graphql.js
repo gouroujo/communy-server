@@ -1,6 +1,6 @@
 const { graphqlExpress } = require('graphql-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
-const OpticsAgent = require('optics-agent');
+// const OpticsAgent = require('optics-agent');
 
 const config = require('config');
 const createLoaders = require('loaders');
@@ -25,9 +25,9 @@ const executableSchema = makeExecutableSchema({
   resolvers: require('./resolvers'),
 });
 
-if (config.get('OPTICS_API_KEY')) {
-  OpticsAgent.instrumentSchema(executableSchema)
-}
+// if (config.get('OPTICS_API_KEY')) {
+//   OpticsAgent.instrumentSchema(executableSchema)
+// }
 
 module.exports = graphqlExpress((req, res) => {
   const loaders = createLoaders(res.locals.userId)
@@ -35,7 +35,7 @@ module.exports = graphqlExpress((req, res) => {
     schema: executableSchema,
     context: {
       res,
-      opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
+      // opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
       logger: logger,
       config: config,
       models: db.models,

@@ -14,6 +14,9 @@ module.exports = {
   user(registration, params, { getField}) {
     return getField('user', registration, 'Registration');
   },
+  organisation(registration, params, { getField}) {
+    return getField('organisation', registration, 'Registration');
+  },
   participation: require('./participation'),
   participations: require('./participations'),
   nparticipations: require('./nparticipations'),

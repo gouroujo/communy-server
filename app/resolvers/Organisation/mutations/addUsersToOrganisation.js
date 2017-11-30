@@ -3,7 +3,7 @@ const logger = require('logger');
 const { roles } = require('dict');
 const config = require('config');
 
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
   if (!auth) return null;
@@ -118,29 +118,29 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
       })
     }))
 
-    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      logger.info('No pubsub topic defined to send invitation emails. messages not send');
-    } else {
-      await Promise.all([
-        users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-          token: {
-            id: user.id,
-            organisationId: organisation._id,
-          },
-          author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
-          organisation: {
-            id: organisation.id,
-            title: organisation.title,
-          },
-          user: {
-            fullname: user.fullname,
-            email: user.email,
-          },
-          message: input.message,
-          subject: 'invite-organisation',
-        }))
-      ])
-    }
+    // if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+    //   logger.info('No pubsub topic defined to send invitation emails. messages not send');
+    // } else {
+    //   await Promise.all([
+    //     users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+    //       token: {
+    //         id: user.id,
+    //         organisationId: organisation._id,
+    //       },
+    //       author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
+    //       organisation: {
+    //         id: organisation.id,
+    //         title: organisation.title,
+    //       },
+    //       user: {
+    //         fullname: user.fullname,
+    //         email: user.email,
+    //       },
+    //       message: input.message,
+    //       subject: 'invite-organisation',
+    //     }))
+    //   ])
+    // }
 
     const updatedOrganisation = await models.Organisation.findByIdAndUpdate(organisation._id, {
       $inc: {

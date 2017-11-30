@@ -1,6 +1,6 @@
 const { models } = require('../db');
 const config = require('../config');
-const pubsub = require('../utils/pubsub');
+// const pubsub = require('../utils/pubsub');
 
 module.exports = {
   Mailing: {
@@ -68,27 +68,27 @@ module.exports = {
           answers: [],
         }));
 
-        if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-          console.log('No pubsub topic defined to send emails. messages not send');
-        } else {
-          await Promise.all([
-            messages.map(message => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-              organisation: {
-                id: organisation.id,
-                title: organisation.title,
-              },
-              user: {
-                fullname: message.to.fullname,
-                email: message.to.email,
-              },
-              message: message.body,
-              title: message.subject,
-              subject: 'message',
-            })
-            .then(() => message.sentAt = Date.now())
-            .catch(e => console.log(e)))
-          ])
-        }
+        // if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+        //   console.log('No pubsub topic defined to send emails. messages not send');
+        // } else {
+        //   await Promise.all([
+        //     messages.map(message => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+        //       organisation: {
+        //         id: organisation.id,
+        //         title: organisation.title,
+        //       },
+        //       user: {
+        //         fullname: message.to.fullname,
+        //         email: message.to.email,
+        //       },
+        //       message: message.body,
+        //       title: message.subject,
+        //       subject: 'message',
+        //     })
+        //     .then(() => message.sentAt = Date.now())
+        //     .catch(e => console.log(e)))
+        //   ])
+        // }
 
         const insertedMessages = await models.Message.insertMany(messages);
         mailing.set('messages', insertedMessages.map(m => m.toObject()));

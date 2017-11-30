@@ -5,7 +5,7 @@ const { values } = require('lodash')
 
 const config = require('config');
 const { roles } = require('dict');
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 const signAsync = (data, secret, options) => {
   return new Promise((resolve, reject) => {
@@ -179,31 +179,31 @@ UserSchema.methods.getToken = function() {
   }, config.get('SECRET'))
 };
 
-UserSchema.methods.sendConfirmation = function() {
-  return Promise.resolve()
-    .then(() => {
-      return JSON.stringify({
-        token: {
-          id: this._id
-        },
-        user: {
-          fullname: this.fullname,
-          email: this.email,
-        },
-        subject: 'confirm',
-      })
-    })
-    .then(data => {
-      if (config.get('PUBSUB_TOPIC_EMAIL')) {
-        return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
-      }
-      console.log('No pubsub topic defined to send confirmation email. message not send')
-      return;
-    })
-    .catch(e => {
-      console.log(e)
-    })
-}
+// UserSchema.methods.sendConfirmation = function() {
+//   return Promise.resolve()
+//     .then(() => {
+//       return JSON.stringify({
+//         token: {
+//           id: this._id
+//         },
+//         user: {
+//           fullname: this.fullname,
+//           email: this.email,
+//         },
+//         subject: 'confirm',
+//       })
+//     })
+//     .then(data => {
+//       if (config.get('PUBSUB_TOPIC_EMAIL')) {
+//         return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), Buffer.from(data));
+//       }
+//       console.log('No pubsub topic defined to send confirmation email. message not send')
+//       return;
+//     })
+//     .catch(e => {
+//       console.log(e)
+//     })
+// }
 
 UserSchema.statics.findByToken = function(token) {
   return new Promise((res, rej) => {

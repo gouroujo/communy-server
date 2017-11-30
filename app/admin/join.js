@@ -1,5 +1,5 @@
 const cloudinary = require('cloudinaryClient');
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 const config = require('config');
 const models = require('db').models;
 const createOrganisation = require('resolvers/Organisation').Mutation.createOrganisation;
@@ -64,13 +64,13 @@ module.exports = function(req, res) {
       }) : Promise.resolve())
     ])
   })
-  .then(([ data ]) => {
-    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      console.log(data);
-      throw new Error('No pubsub topic defined to send reset email. message not send')
-    }
-    return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), data);
-  })
+  // .then(([ data ]) => {
+  //   if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+  //     console.log(data);
+  //     throw new Error('No pubsub topic defined to send reset email. message not send')
+  //   }
+  //   return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), data);
+  // })
   .then(() => {
     return res.sendStatus(200);
   })

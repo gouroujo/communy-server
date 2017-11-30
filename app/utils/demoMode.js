@@ -100,10 +100,7 @@ module.exports = async function (organisationId, o) {
       startTime: startDate.toISOString(),
       endTime: endDate.toISOString(),
       demo: true,
-      organisation: {
-        _id: organisation._id,
-        title: organisation.title,
-      },
+      organisation: organisation.toObject(),
       nanswers: options.users > 0 ? lodash.random(Math.min(options.users, 5), options.users) : 0,
       nyes: 0,
       nno: 0,
@@ -129,10 +126,7 @@ module.exports = async function (organisationId, o) {
           event.nno++;
         }
         return {
-          organisation: {
-            _id: organisation._id,
-            title: organisation.title,
-          },
+          organisation: organisation.toObject(),
           event: {
             _id: event._id,
             startTime: event.startTime,

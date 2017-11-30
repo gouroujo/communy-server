@@ -33,6 +33,7 @@ const EventSchema = new Schema({
       index: true,
     },
     title: String,
+    cover: Number,
   },
   networks: [SubNetworkSchema],
   demo: Boolean,

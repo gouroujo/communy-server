@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-const config = require('./config');
+const mongoose = require('mongoose')
+const config = require('config')
+const logger = require('logger')
 
 const OrganisationSchema = require('./schemas/organisation');
 const RegistrationSchema = require('./schemas/registration');
@@ -30,10 +31,13 @@ const db = {
   mongoose: mongoose,
 }
 
+if (config.get('DEBUG') === 1){
+  db.mongoose.set('debug', true)
+}
+
 db.mongoose.connect(config.get('MONGO_URI'), { useMongoClient: true }, (err) => {
   if (err) throw err;
-  console.log('Successfully connected to MongoDB');
-  if (config.get('DEBUG') == 1) db.mongoose.set('debug', true);
+  logger.info('Successfully connected to MongoDB');
 });
 
 

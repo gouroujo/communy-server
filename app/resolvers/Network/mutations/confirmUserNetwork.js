@@ -2,7 +2,7 @@ const config = require('config');
 const { models } = require('db');
 const { roles } = require('dict');
 const logger = require('logger');
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 module.exports = async function (parent, { id, userId }, { currentUserId, auth, loaders }) {
   if (!auth) return null;
@@ -50,26 +50,26 @@ module.exports = async function (parent, { id, userId }, { currentUserId, auth, 
       }
     });
 
-    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      logger.info('No pubsub topic defined to send invitation emails. messages not send');
-    } else {
-      await pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-        token: {
-          id: user.id,
-          networkId: network.id,
-        },
-        author: currentUser.fullname,
-        network: {
-          id: network.id,
-          title: network.title,
-        },
-        user: {
-          fullname: (user.firstname || user.lastname) ? `${user.firstname + ' ' || ''}${user.lastname || ''}` : user.email,
-          email: user.email,
-        },
-        subject: 'confirm_network',
-      })
-    }
+    // if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+    //   logger.info('No pubsub topic defined to send invitation emails. messages not send');
+    // } else {
+    //   await pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+    //     token: {
+    //       id: user.id,
+    //       networkId: network.id,
+    //     },
+    //     author: currentUser.fullname,
+    //     network: {
+    //       id: network.id,
+    //       title: network.title,
+    //     },
+    //     user: {
+    //       fullname: (user.firstname || user.lastname) ? `${user.firstname + ' ' || ''}${user.lastname || ''}` : user.email,
+    //       email: user.email,
+    //     },
+    //     subject: 'confirm_network',
+    //   })
+    // }
 
     loaders.Network.prime(network._id, network);
     return network

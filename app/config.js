@@ -6,7 +6,6 @@ nconf
   .argv()
   // 2. Environment variables
   .env([
-    'GCLOUD_PROJECT',
     'PUBSUB_TOPIC_EMAIL',
     'SITENAME',
     'HOST',
@@ -58,7 +57,7 @@ nconf.set('PRODUCTION', process.env.NODE_ENV === 'production');
 // Check for required settings
 
 if (nconf.get('PRODUCTION')) {
-  checkConfig('GCLOUD_PROJECT');
+  // checkConfig('GCLOUD_PROJECT');
   // checkConfig('OPTICS_API_KEY');
   if (nconf.get('SECRET') === 'secret') {
     throw new Error(`You must set SECRET as an environment variable or in config.json!`);

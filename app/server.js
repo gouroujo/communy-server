@@ -5,7 +5,6 @@ var cors = require('cors')
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const { graphiqlExpress } = require('graphql-server-express');
-const OpticsAgent = require('optics-agent');
 
 const AuthMiddleware = require('auth/middleware');
 const config = require('config');
@@ -26,7 +25,6 @@ app.use(cors({
 app.use(config.get('ENDPOINT_URL'),
   compression(),
   bodyParser.json(),
-  OpticsAgent.middleware(),
   AuthMiddleware(),
   require('./graphql')
 );

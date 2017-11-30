@@ -26,6 +26,8 @@ const RegistrationSchema = new Schema({
       required: true,
       trim: true,
     },
+    cover: Number,
+    logo: Number,
   },
   network: {
     _id: {

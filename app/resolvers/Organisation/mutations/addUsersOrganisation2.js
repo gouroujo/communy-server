@@ -3,7 +3,7 @@ const logger = require('logger');
 const { roles } = require('dict');
 const config = require('config');
 
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
   if (!auth) return new Error('Unauthorized');
@@ -116,35 +116,35 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
     })
   })
   // 6 - Send the invitation emails
-  .then(([organisation, users]) => {
-    if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-      logger.info('No pubsub topic defined to send invitation emails. messages not send');
-      return organisation;
-    }
-    return Promise.all([
-      users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-        token: {
-          id: user.id,
-          organisationId: organisation.id,
-        },
-        author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
-        organisation: {
-          id: organisation.id,
-          title: organisation.title,
-        },
-        user: {
-          fullname: user.fullname,
-          email: user.email,
-        },
-        message: input.message,
-        subject: 'invite',
-      }))
-    ])
-    .then(() => {
-      loaders.Organisation.prime(organisation._id, organisation)
-      return organisation
-    })
-  })
+  // .then(([organisation, users]) => {
+  //   if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+  //     logger.info('No pubsub topic defined to send invitation emails. messages not send');
+  //     return organisation;
+  //   }
+  //   return Promise.all([
+  //     users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+  //       token: {
+  //         id: user.id,
+  //         organisationId: organisation.id,
+  //       },
+  //       author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
+  //       organisation: {
+  //         id: organisation.id,
+  //         title: organisation.title,
+  //       },
+  //       user: {
+  //         fullname: user.fullname,
+  //         email: user.email,
+  //       },
+  //       message: input.message,
+  //       subject: 'invite',
+  //     }))
+  //   ])
+  //   .then(() => {
+  //     loaders.Organisation.prime(organisation._id, organisation)
+  //     return organisation
+  //   })
+  // })
   .catch(e => {
     logger.warn(e);
     throw new Error('Bad Request')

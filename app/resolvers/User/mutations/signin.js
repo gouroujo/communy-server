@@ -1,4 +1,4 @@
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 module.exports = async (parent, { input }, { models, logger, config }) => {
   try {
@@ -13,18 +13,18 @@ module.exports = async (parent, { input }, { models, logger, config }) => {
         userCreated: true,
       });
 
-      if (config.get('PUBSUB_TOPIC_EMAIL')) {
-        await pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-          token: {
-            id: user._id
-          },
-          user: {
-            fullname: user.fullname,
-            email: user.email,
-          },
-          subject: 'confirm',
-        })
-      }
+      // if (config.get('PUBSUB_TOPIC_EMAIL')) {
+      //   await pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+      //     token: {
+      //       id: user._id
+      //     },
+      //     user: {
+      //       fullname: user.fullname,
+      //       email: user.email,
+      //     },
+      //     subject: 'confirm',
+      //   })
+      // }
     }
 
     const token = await user.getToken();

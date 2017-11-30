@@ -31,6 +31,11 @@ const ParticipationSchema = new Schema({
       ref: 'Organisation',
       required: true,
     },
+    title:  {
+      type: String,
+      trim: true,
+    },
+    logo: Number,
   },
   demo: Boolean,
   answer: {

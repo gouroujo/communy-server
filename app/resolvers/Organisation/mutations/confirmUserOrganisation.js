@@ -1,5 +1,5 @@
 const { roles } = require('dict');
-const pubsub = require('utils/pubsub');
+// const pubsub = require('utils/pubsub');
 
 module.exports = async function (parent, { id, userId }, { currentUserId, auth, loaders, config, models, logger }) {
   if (!auth) return new Error('Unauthorized');
@@ -42,32 +42,32 @@ module.exports = async function (parent, { id, userId }, { currentUserId, auth, 
         nwt_confirm: -1,
       }
     })
-    .then(organisation => {
-      if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-        logger.info('No pubsub topic defined to send invitation emails. messages not send');
-        return organisation;
-      }
-      return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-        token: {
-          id: user.id,
-          organisationId: organisation.id,
-        },
-        author: currentUser.fullname,
-        organisation: {
-          id: organisation.id,
-          title: organisation.title,
-        },
-        user: {
-          fullname: user.fullname,
-          email: user.email,
-        },
-        subject: 'confirm_org',
-      })
-      .then(() => {
-        loaders.Organisation.prime(organisation._id, organisation);
-        return organisation
-      })
-    })
+    // .then(organisation => {
+    //   if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+    //     logger.info('No pubsub topic defined to send invitation emails. messages not send');
+    //     return organisation;
+    //   }
+    //   return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+    //     token: {
+    //       id: user.id,
+    //       organisationId: organisation.id,
+    //     },
+    //     author: currentUser.fullname,
+    //     organisation: {
+    //       id: organisation.id,
+    //       title: organisation.title,
+    //     },
+    //     user: {
+    //       fullname: user.fullname,
+    //       email: user.email,
+    //     },
+    //     subject: 'confirm_org',
+    //   })
+    //   .then(() => {
+    //     loaders.Organisation.prime(organisation._id, organisation);
+    //     return organisation
+    //   })
+    // })
   })
   .catch(e => {
     logger.error(e);

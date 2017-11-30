@@ -1,6 +1,6 @@
 const models = require('../db').models;
 const config = require('../config');
-const pubsub = require('../utils/pubsub');
+// const pubsub = require('../utils/pubsub');
 
 // const joinOrganisation = require('../resolvers/mutations/joinOrganisation');
 
@@ -57,21 +57,21 @@ module.exports =function (req, res) {
       .catch(e => {
         return res.sendStatus(500);
       })
-      .then(() => {
-        if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-          return new Error('No pubsub topic defined to send reset email. message not send')
-        }
-        return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-          token: {
-            id: user._id
-          },
-          user: {
-            fullname: user.fullname,
-            email: user.email,
-          },
-          subject: 'confirm',
-        })
-      })
+      // .then(() => {
+      //   if (!config.get('PUBSUB_TOPIC_EMAIL')) {
+      //     return new Error('No pubsub topic defined to send reset email. message not send')
+      //   }
+      //   return pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
+      //     token: {
+      //       id: user._id
+      //     },
+      //     user: {
+      //       fullname: user.fullname,
+      //       email: user.email,
+      //     },
+      //     subject: 'confirm',
+      //   })
+      // })
       .catch(e => {
         console.log(e);
       })
