@@ -1,6 +1,6 @@
 
-module.exports = (user, { before, after, limit, offset, organisationId, answer, answers }, { auth, currentUserId, models }) => {
-  const query = models.Participation.find({});
+module.exports = async (user, { before, after, answer, answers, organisationId }, { auth, currentUserId, models }) => {
+  const query = models.Participation.count({});
 
   if (user._id === currentUserId) {
     query.where('user._id').equals(currentUserId);
@@ -19,5 +19,7 @@ module.exports = (user, { before, after, limit, offset, organisationId, answer, 
   if (after) query.gte('event.endTime', after);
   if (before) query.lte('event.startTime', before);
 
-  return query.sort('event.endTime').limit(limit).skip(offset).lean().exec();
+  return query.exec()
+
+
 }

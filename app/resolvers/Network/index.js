@@ -1,3 +1,5 @@
+const { Types } = require('mongoose');
+
 module.exports = {
   Network: require('./fields'),
   Query: {
@@ -8,6 +10,7 @@ module.exports = {
     },
 
     network(_, { id }, { loaders }) {
+      if (!Types.ObjectId.isValid(id)) throw new Error('Invalid ID');
       return loaders.Network.load(id);
     },
   },

@@ -9,6 +9,7 @@ const { orgPermissions, networkPermissions } = require('dict');
 
 module.exports = () => async (req, res, next) => {
   const token = req.headers.authorization || req.body.variables && req.body.variables.token;
+
   if (!token) return next();
   try {
     const payload = await verifyAsync(token, config.get('SECRET'))

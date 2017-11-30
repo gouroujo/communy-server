@@ -1,4 +1,5 @@
 const geocoder = require('utils/geocoder');
+const db = require('db');
 
 module.exports = async (parent, { input, organisationId }, { auth, language, models, logger }) => {
   if (!auth) return null;
@@ -7,11 +8,11 @@ module.exports = async (parent, { input, organisationId }, { auth, language, mod
   const organisation = await models.Organisation.findById(organisationId, 'title')
   if (!organisation) return new Error('organisation not found');
 
-  let newEvent = Object.assign(input, { organisation })
+  let data = Object.assign(input, { organisation })
   if (input.address) {
     try {
       const address = await geocoder(input.address, language)
-      newEvent.address = Object.assign({}, address, input.address)
+      data.address = Object.assign({}, address, input.address)
     } catch (e) {
       logger.error(e)
     }
@@ -22,20 +23,32 @@ module.exports = async (parent, { input, organisationId }, { auth, language, mod
       "organisation._id": organisationId,
       "ack": true
     });
-    newEvent.networks = networks.map(n => ({ _id: n._id, title: n.title }))
+    data.networks = networks.map(n => ({ _id: n._id, title: n.title }))
   } else if (input.networkIds && input.networkIds.length > 0) {
     const networks = await models.Partnership.find({
       "organisation._id": organisationId,
       "network._id": { $in: input.networks },
       "ack": true,
     });
-    newEvent.networks = networks.map(n => ({ _id: n._id, title: n.title }))
+    data.networks = networks.map(n => ({ _id: n._id, title: n.title }))
   }
+  data.uid = db.mongoose.Types.ObjectId()
 
-  const [ event ] = await Promise.all([
-    models.Event.create(newEvent),
-    organisation.update({ $inc: { nevents: 1 }})
-  ])
+  const events = await models.Event.insertMany(
+    data.parts
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((part, i) => ({
+      ...data,
+      number: i,
+      startTime: part.startTime,
+      endTime: part.endTime,
+    })));
 
-  return event
+  await organisation.update({ $inc: { nevents: events.length }})
+
+  return events[0]
+  // return models.Event.findOne({
+  //   uid: data.uid,
+  //   number: 0,
+  // })
 }

@@ -1,3 +1,5 @@
+const sanitizeHtml = require('sanitize-html');
+
 module.exports = async function (parent, { id, input }, { auth, loaders, logger, models }) {
   if (!auth) return new Error('Unauthorized');
   if (!auth.check(`organisation:${id}:edit`)) return new Error('Forbidden');
@@ -8,7 +10,9 @@ module.exports = async function (parent, { id, input }, { auth, loaders, logger,
 
     if (input.title && organisation.title !== input.title.trim() ) {
       const results = await Promise.all([
-        models.Organisation.findByIdAndUpdate(id, input, { new: true }),
+        models.Organisation.findByIdAndUpdate(id, Object.assign(input, {
+          description: sanitizeHtml(input.description),
+        }), { new: true }),
         models.Registration.updateMany({
           "organisation._id": id
         }, {
@@ -44,7 +48,9 @@ module.exports = async function (parent, { id, input }, { auth, loaders, logger,
       return results[0];
     }
 
-    const result = await models.Organisation.findByIdAndUpdate(id, input, { new: true });
+    const result = await models.Organisation.findByIdAndUpdate(id, Object.assign(input, {
+      description: sanitizeHtml(input.description),
+    }), { new: true });
     loaders.Organisation.prime(id, result);
     return result;
 

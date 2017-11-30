@@ -5,6 +5,7 @@ extend type Query {
   events (
     organisationId: ID
     answer: EventAnswer
+    answers: [EventAnswer!]
     limit: Int
     offset: Int
     after: DateTime
@@ -45,8 +46,8 @@ type Event {
   address: Address
   startTime: DateTime!
   endTime: DateTime!
+
   duration: String!
-  days: [String!]!
   allDay: Boolean
   organisation: Organisation!
 
@@ -80,11 +81,15 @@ input EventInput {
   title: String!
   description: String
   address: AddressInput
+  parts: [EventPartInput!]!
+  networkIds: [ID!]
+  allNetwork: Boolean
+}
+
+input EventPartInput {
   startTime: DateTime!
   endTime: DateTime!
   allDay: Boolean
-  networkIds: [ID!]
-  allNetwork: Boolean
 }
 
 input addUserToEventInput {

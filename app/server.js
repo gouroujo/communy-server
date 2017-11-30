@@ -1,5 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
+var cors = require('cors')
+
 const bodyParser = require('body-parser');
 const compression = require('compression');
 const { graphiqlExpress } = require('graphql-server-express');
@@ -15,6 +17,11 @@ const app = express();
 
 app.set('trust proxy', 1);
 app.use(helmet());
+app.use(cors({
+  origin: ['http://localhost:3000', /\.communy\.org$/],
+  allowedHeaders: ['Content-Type', 'Authorization'] ,
+  optionsSuccessStatus: 200
+}))
 
 app.use(config.get('ENDPOINT_URL'),
   compression(),

@@ -17,6 +17,8 @@ module.exports = async (parent, { id, input }, { auth, language, models, logger 
     }
   }
 
+  // TODO: UPDATE PARTICIPATIONS
+
   if (input.allNetwork) {
     const partnerships = await models.Partnership.find({
       "organisation._id": event.organisation._id,

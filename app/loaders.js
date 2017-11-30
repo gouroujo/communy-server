@@ -57,11 +57,7 @@ function createJoinLoaderMapFor(model, targetKey, modelKey, mapInstance) {
 }
 
 module.exports =  function(userId) {
-  const EventParticipationLoaders = new Map();
-  const UserMembershipLoaders = new Map();
-  const NetworkPartnershipLoaders = new Map();
-  const OrganisationPartnershipLoaders = new Map();
-
+  const Loaders = new Map();
   return {
     Event: createLoaderFor(models.Event),
     Organisation: createLoaderFor(models.Organisation),
@@ -77,9 +73,11 @@ module.exports =  function(userId) {
     User: createLoaderFor(models.User),
     Participation: createLoaderFor(models.Participation),
     CurrentUserParticipation: createJoinLoaderFor(models.Participation, userId, 'user', 'event'),
-    UserParticipationForEvent: createJoinLoaderMapFor(models.Participation, 'event', 'user', EventParticipationLoaders),
-    NetworkMembershipForUser: createJoinLoaderMapFor(models.Membership, 'user', 'network', UserMembershipLoaders),
-    OrganisationPartnershipForNetwork: createJoinLoaderMapFor(models.Partnership, 'network', 'organisation', NetworkPartnershipLoaders),
-    NetworkPartnershipForOrganisation: createJoinLoaderMapFor(models.Partnership, 'organisation', 'network', OrganisationPartnershipLoaders),
+    UserParticipationForEvent: createJoinLoaderMapFor(models.Participation, 'event', 'user', Loaders),
+    EventParticipationForUser: createJoinLoaderMapFor(models.Participation, 'event', 'user', Loaders),
+    NetworkMembershipForUser: createJoinLoaderMapFor(models.Membership, 'user', 'network', Loaders),
+    OrganisationPartnershipForNetwork: createJoinLoaderMapFor(models.Partnership, 'network', 'organisation', Loaders),
+    NetworkPartnershipForOrganisation: createJoinLoaderMapFor(models.Partnership, 'organisation', 'network', Loaders),
+    OrganisationRegistrationForUser: createJoinLoaderMapFor(models.Registration, 'user', 'organisation', Loaders),
   }
 }

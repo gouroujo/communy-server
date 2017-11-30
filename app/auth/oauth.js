@@ -1,6 +1,6 @@
 const { get } = require('axios');
 const models = require('../db').models;
-const config = require('../config');
+// const config = require('../config');
 
 // const joinOrganisation = require('../resolvers/mutations/joinOrganisation');
 

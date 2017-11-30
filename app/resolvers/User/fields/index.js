@@ -126,4 +126,6 @@ module.exports = {
   messages: require('./messages'),
   participation: require('./participation'),
   participations: require('./participations'),
+  nparticipations: require('./nparticipations'),
+
 }

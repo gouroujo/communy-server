@@ -1,6 +1,7 @@
 const User = /* GraphQL */`
 extend type Query {
   user: User
+  me: User
 }
 
 extend type Mutation {
@@ -14,7 +15,7 @@ extend type Mutation {
     input: linkFacebookToUserInput!
   ): User!
 
-  joinOrganisationToUser (
+  addOrganisationToUser (
     organisationId: ID!
   ) : User!
 
@@ -22,8 +23,19 @@ extend type Mutation {
     organisationId: ID!
   ) : User!
 
-  leaveOrganisationToUser (
+  removeOrganisationToUser (
     organisationId: ID!
+  ) : User!
+
+  signWithFacebook (
+    input: linkFacebookToUserInput!
+  ) : User!
+
+  login (
+    input: loginUserInput!
+  ) : User!
+  signin (
+    input: SigninUserInput!
   ) : User!
 }
 
@@ -41,6 +53,7 @@ type User {
   phone2: String
   hasCredentials: Boolean!
   answer (eventId: ID): EventAnswer
+  token: String
 
   registrations (
     role: OrganisationRole
@@ -70,18 +83,20 @@ type User {
 
   participations (
     organisationId: ID
-    after: Date
-    before: Date
+    after: DateTime
+    before: DateTime
     answer: EventAnswer
+    answers: [EventAnswer!]
     limit: Int
     offset: Int
   ): [Participation!]
 
   nparticipations (
     organisationId: ID
-    after: Date
-    before: Date
+    after: DateTime
+    before: DateTime
     answer: EventAnswer
+    answers: [EventAnswer!]
   ): Int!
 
   messages (
@@ -103,9 +118,25 @@ input UserInput {
   phone2: String
 }
 
+input SigninUserInput {
+  firstname: String
+  lastname: String
+  email: String!
+  password: String!
+  birthday: Date
+  birthplace: String
+  phone1: String
+  phone2: String
+}
+
 input linkFacebookToUserInput {
   facebookId: String!
   facebookAccessToken: String!
+}
+
+input loginUserInput {
+  email: String!
+  password: String!
 }
 `;
 

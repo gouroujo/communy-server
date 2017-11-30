@@ -1,7 +1,7 @@
 const cloudinary = require('cloudinaryClient');
 const config = require('config');
 const models = require('db').models;
-const createOrganisation = require('resolvers/organisation').Mutation.createOrganisation;
+const createOrganisation = require('resolvers/Organisation').Mutation.createOrganisation;
 const { sign } = require('jsonwebtoken');
 const logger = require('logger');
 

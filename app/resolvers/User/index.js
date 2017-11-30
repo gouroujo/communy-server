@@ -6,12 +6,19 @@ module.exports = {
       if (!currentUserId) return null;
       return loaders.User.load(currentUserId);
     },
+    me(parent, params, { currentUserId, loaders }) {
+      if (!currentUserId) return null;
+      return loaders.User.load(currentUserId);
+    },
   },
   Mutation: {
     ackOrganisationToUser: require('./mutations/ackOrganisationToUser'),
     editUser: require('./mutations/editUser'),
-    joinOrganisationToUser: require('./mutations/joinOrganisationToUser'),
-    leaveOrganisationToUser: require('./mutations/leaveOrganisationToUser'),
+    addOrganisationToUser: require('./mutations/addOrganisationToUser'),
+    removeOrganisationToUser: require('./mutations/removeOrganisationToUser'),
     linkFacebookToUser: require('./mutations/linkFacebookToUser'),
+    signWithFacebook: require('./mutations/signWithFacebook'),
+    login: require('./mutations/login'),
+    signin: require('./mutations/signin'),
   }
 }

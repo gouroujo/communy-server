@@ -8,7 +8,7 @@ module.exports = async (parent, { organisationId }, { currentUserId, logger, mod
     }).lean().exec();
     if (!registration) return null;
 
-    const [ user ] = Promise.all([
+    const [ user ] = await Promise.all([
       models.User.findByIdAndUpdate(currentUserId, {
         $pull: {
           registrations: { "organisation._id": organisationId },

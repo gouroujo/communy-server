@@ -18,6 +18,7 @@
     "body-parser": "^1.17.2",
     "cloudinary": "^1.9.0",
     "compression": "^1.7.0",
+    "cors": "^2.8.4",
     "dataloader": "^1.3.0",
     "express": "^4.15.4",
     "faker": "^4.1.0",
@@ -33,6 +34,7 @@
     "mongoose": "^4.11.9",
     "nconf": "^0.8.4",
     "optics-agent": "^1.1.6",
+    "sanitize-html": "^1.16.1",
     "shiro-trie": "^0.3.13",
     "winston": "^3.0.0-rc1"
   },

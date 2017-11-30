@@ -125,7 +125,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
         users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
           token: {
             id: user.id,
-            organisationId: organisation.id,
+            organisationId: organisation._id,
           },
           author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
           organisation: {

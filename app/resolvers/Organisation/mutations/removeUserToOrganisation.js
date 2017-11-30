@@ -10,7 +10,7 @@ module.exports = async (parent, { id, userId }, { auth, logger, models }) => {
     }).lean().exec();
     if (!registration) return null;
 
-    const [ organisation ] = Promise.all([
+    const [ organisation ] = await Promise.all([
       models.Organisation.findByIdAndUpdate(id, {
         $inc: {
           nwt_confirm: (registration.ack && !registration.confirm) ? -1 : 0,

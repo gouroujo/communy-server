@@ -12,13 +12,18 @@ const SubNetworkSchema = new Schema({
     required: true,
     trim: true,
   },
-});
+}, { _id: false });
 
 const EventSchema = new Schema({
+  uid: {
+    type: Schema.Types.ObjectId,
+    inde: true,
+  },
+  number: Number,
   title:  String,
   description: String,
-  startTime: { type: Date, index: true },
-  endTime: { type: Date, index: true },
+  startTime: { type: Date, index: true, required: true },
+  endTime: { type: Date, index: true, required: true },
   allDay: Boolean,
   organisation: {
     _id: {

@@ -1,15 +1,15 @@
 const { roles } = require('dict');
 const pubsub = require('utils/pubsub');
 
-module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders, config, models, logger }) {
+module.exports = async function (parent, { id, userId }, { currentUserId, auth, loaders, config, models, logger }) {
   if (!auth) return new Error('Unauthorized');
-  if (!auth.permissions.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
+  if (!auth.check(`organisation:${id}:add_user`)) return new Error('Forbidden');
   const currentUser = await loaders.User.load(currentUserId);
 
   return Promise.all([
     models.User.findOneAndUpdate(
       {
-        _id: input.userId,
+        _id: userId,
         registrations: {
           $elemMatch: { "organisation._id": id, ack: true, role: null }
         }
@@ -24,7 +24,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
     ),
     models.Registration.updateOne(
       {
-        "user._id": input.userId,
+        "user._id": userId,
         "organisation._id": id
       },
       {

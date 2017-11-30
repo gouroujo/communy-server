@@ -6,6 +6,7 @@ extend type Query {
     offset: Int
     role: OrganisationRole
     search: String
+    categories: [String!]
   ): [Organisation!]
 
   organisation (
@@ -28,19 +29,19 @@ extend type Mutation {
     id: ID!,
   ): Organisation
 
-  confirmUserToOrganisation (
-    id: ID!
-    input: ConfirmUserOrganisationInput!
-  ): Organisation!
-
   addUsersToOrganisation(
     id: ID!
     input: AddUsersToOrganisationInput!
   ): Organisation!
 
+  confirmUserToOrganisation (
+    id: ID!
+    userId: ID!
+  ): Organisation!
+
   removeUserToOrganisation (
     id: ID!
-    input: RemoveUserToOrganisationInput!
+    userId: ID!
   ): Organisation!
 
   setUserRoleToOrganisation(
@@ -98,8 +99,8 @@ type Organisation {
   ): [Registration]
 
   events (
-    before: Date
-    after: Date
+    before: DateTime
+    after: DateTime
     limit: Int
     answer: EventAnswer
   ): [Event!]
@@ -107,6 +108,7 @@ type Organisation {
   nevents (
     before: Date
     after: Date
+    answer: EventAnswer
   ): Int!
 
   nusers: Int!
@@ -139,17 +141,9 @@ input OrganisationInput {
   cover: Int
 }
 
-input ConfirmUserOrganisationInput {
-  userId: ID!
-}
-
 input AddUsersToOrganisationInput {
   users: [OrganisationUserInput!]!
   message: String
-}
-
-input RemoveUserToOrganisationInput {
-  userId: ID!
 }
 
 input setUserRoleToOrganisationInput {

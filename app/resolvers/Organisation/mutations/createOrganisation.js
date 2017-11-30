@@ -1,6 +1,7 @@
 const { models } = require('db');
 const logger = require('logger')
-const { roles } = require('dict');
+const { roles } = require('dict')
+const sanitizeHtml = require('sanitize-html');
 
 module.exports = async function (parent, { input }, { currentUserId, loaders }) {
   if (!currentUserId) return null;
@@ -9,6 +10,7 @@ module.exports = async function (parent, { input }, { currentUserId, loaders }) 
     const currentUser = await loaders.User.load(currentUserId);
     const organisation = await models.Organisation.create(Object.assign({}, input, {
       nusers: 1,
+      description: sanitizeHtml(input.description)
     }));
 
     const registration = await models.Registration.create({

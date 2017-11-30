@@ -34,6 +34,7 @@ module.exports = graphqlExpress((req, res) => {
   return {
     schema: executableSchema,
     context: {
+      res,
       opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
       logger: logger,
       config: config,
