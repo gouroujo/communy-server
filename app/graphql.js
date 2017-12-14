@@ -42,6 +42,7 @@ module.exports = graphqlExpress((req, res) => {
       currentUserId: res.locals.userId,
       auth: res.locals.auth,
       loaders: loaders,
+      hostname: req.hostname,
       language: req.acceptsLanguages(['fr', 'en']),
       getField: (fieldName, parent, loader) => {
         return (parent[fieldName] ? Promise.resolve(parent) : loaders[loader].load(parent._id))

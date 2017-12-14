@@ -11,7 +11,7 @@ module.exports = async (parent, { input }, { models, logger }) => {
     })
 
     if (!users.length) {
-      return models.User.create({
+      const user = await models.User.create({
         firstname: data.first_name,
         lastname: data.last_name,
         email: data.email,
@@ -20,6 +20,8 @@ module.exports = async (parent, { input }, { models, logger }) => {
         confirm: true,
         userCreated: true,
       })
+      user.token = await user.getToken()
+      return user;
     }
 
     if (users.length === 1) {

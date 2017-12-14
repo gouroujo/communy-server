@@ -1,0 +1,12 @@
+Bonjour {{user.fullname}},
+Vous avez reçu un nouveau message sur https://communy.org:
+
+{{message}}
+
+---
+
+Si vous considérez cet email comme indésirable, merci de le transférer à abuse@communy.org.
+
+A très vite,
+
+L'équipe de {{sitename}}

@@ -1,0 +1,17 @@
+Bonjour {{user.fullname}} !
+{{author.fullname}} vous a invité à rejoindre la communauté {{organisation.title}}. Pour accepter l'invitation, vous devez cliquez sur le lien suivant :
+
+{{url}}?{{token_name}}={{user.token}}
+
+{{text}}
+- {{author.fullname}}
+
+---
+Communy est une plateforme pour aider les communautés comme {{organisation.title}} à gérer leurs membres et leur planning.
+Retrouvez dans votre espace personnel toutes les activités organisées !
+
+Si vous considérez cet email comme indésirable, merci de le transférer à abuse@communy.org.
+
+A très vite,
+
+L'équipe de {{sitename}}

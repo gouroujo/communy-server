@@ -9,9 +9,11 @@ const ParticipationSchema = require('./schemas/participation');
 const EventSchema = require('./schemas/event');
 const MailingSchema = require('./schemas/mailing');
 const MessageSchema = require('./schemas/message');
-const NetworkSchema = require('./schemas/network');
+const CompanySchema = require('./schemas/company');
 const PartnershipSchema = require('./schemas/partnership');
-const MembershipSchema = require('./schemas/membership');
+const EmploymentSchema = require('./schemas/employment');
+
+const NewsfeedSchema = require('./schemas/newsfeed');
 
 mongoose.Promise = global.Promise;
 
@@ -24,9 +26,10 @@ const db = {
     Event: mongoose.model('Event', EventSchema),
     Mailing: mongoose.model('Mailing', MailingSchema),
     Message: mongoose.model('Message', MessageSchema),
-    Network: mongoose.model('Network', NetworkSchema),
+    Company: mongoose.model('Company', CompanySchema),
     Partnership: mongoose.model('Partnership', PartnershipSchema),
-    Membership: mongoose.model('Membership', MembershipSchema),
+    Employment: mongoose.model('Employment', EmploymentSchema),
+    Newsfeed: mongoose.model('Newsfeed', NewsfeedSchema)
   },
   mongoose: mongoose,
 }

@@ -9,7 +9,7 @@ ENV PORT 3000
 
 COPY package.json /usr/src/
 COPY yarn.lock /usr/src/
-RUN yarn
+RUN yarn install --production
 
 # Bundle app source
 COPY ./app /usr/src/app

@@ -38,7 +38,8 @@ module.exports = async function (parent, { input }, { currentUserId, loaders }) 
     return organisation;
 
   } catch(e) {
-    logger.warn(e);
+    console.log(e)
+    logger.error(e);
     return null;
   }
 }

@@ -5,7 +5,7 @@ module.exports = async function (parent, { id }, { auth, models }) {
 
   try {
     await models.Organisation.deleteOne({ _id: id });
-    const events = await models.Event.deleteMany({ "organisation._id": id });
+    await models.Event.deleteMany({ "organisation._id": id });
     await models.Registration.deleteMany({ "organisation._id": id });
     await models.User.bulkWrite([
       {
@@ -52,8 +52,6 @@ module.exports = async function (parent, { id }, { auth, models }) {
         },
       },
     ]);
-    console.log(events);
-
     return null;
 
   } catch (e) {

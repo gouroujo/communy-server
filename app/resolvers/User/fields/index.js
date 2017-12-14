@@ -32,6 +32,9 @@ module.exports = {
       return !!(password || facebookId)
     })
   },
+  fullname(user, params, { getField }) {
+    return getField('fullname', user, 'User');
+  },
   firstname(user, params, { getField }) {
     return getField('firstname', user, 'User');
   },
@@ -52,16 +55,6 @@ module.exports = {
   },
   phone2(user, params, { getField }) {
     return getField('phone2', user, 'User');
-  },
-  fullname(user, args, { getField }) {
-    if (user.fullname) return user.fullname;
-    return Promise.all([
-      getField('firstname', user, 'User'),
-      getField('lastname', user, 'User'),
-      getField('email', user, 'User')
-    ]).then(([firstname, lastname, email]) => {
-      return (firstname || lastname) ? `${firstname || ''} ${lastname || ''}` : email;
-    })
   },
   nunreadMessage(user, params, { getField }) {
     return getField('nunreadMessage', user, 'User');

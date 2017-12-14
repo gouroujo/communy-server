@@ -59,32 +59,32 @@ const SubRegistrationSchema = new Schema({
   confirm: { type: Boolean, default: false },
 }, { _id: false });
 
-const SubNetworkSchema = new Schema({
+const SubCompanySchema = new Schema({
   title:  {
     type: String,
     required: true,
     trim: true,
   },
-  _id: { type: Schema.Types.ObjectId, ref: 'Network', required: true },
+  _id: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
 }, { _id: false });
 
-const SubMembershipSchema = new Schema({
+const SubEmploymentSchema = new Schema({
   _id: {
     type: Schema.Types.ObjectId,
-    ref: 'Membership',
+    ref: 'Employment',
     required: true,
   },
-  network: SubNetworkSchema,
+  company: SubCompanySchema,
   role: {
     type: String,
     enum: values(roles).concat([null]),
     default: null,
   },
   ack: { type: Boolean, default: false },
-  confirm: { type: Boolean, default: false },
 }, { _id: false });
 
 const UserSchema = new Schema({
+  fullname: String,
   firstname:  String,
   lastname: String,
   password: {
@@ -116,10 +116,7 @@ const UserSchema = new Schema({
     type: [SubRegistrationSchema],
     default: [],
   },
-  memberships: {
-    type: [SubMembershipSchema],
-    default: [],
-  },
+  employment: SubEmploymentSchema,
   norganisations: { type: Number, default: 0 },
   nnetworks: { type: Number, default: 0 },
   nunreadMessage: { type: Number, default: 0 },
@@ -127,16 +124,10 @@ const UserSchema = new Schema({
   timestamps: true
 });
 
-UserSchema.virtual('fullname')
-  .get(function() {
-    return (this.firstname || this.lastname) ? `${this.firstname || ''} ${this.lastname || ''}` : this.email;
-  })
-  .set(function(v) {
-    this.firstname = v.substr(0, v.indexOf(' '));
-    this.lastname = v.substr(v.indexOf(' ') + 1);
-  });
-
 UserSchema.pre('save', function(next) {
+    if (this.isModified('firstname') || this.isModified('lastname') || this.isModified('email')) {
+      this.fullname = (this.firstname || this.lastname) ? `${this.firstname || ''} ${this.lastname || ''}` : this.email;
+    }
     // only hash the password if it has been modified (or is new)
     if (!this.isModified('password')) return next();
 
@@ -173,10 +164,12 @@ UserSchema.methods.comparePassword = function(candidatePassword) {
 
 };
 
-UserSchema.methods.getToken = function() {
-  return signAsync({
-    id: this._id,
-  }, config.get('SECRET'))
+UserSchema.methods.getToken = function(payload = {}, options = {}) {
+  return signAsync(
+    Object.assign({ id: this._id }, payload),
+    config.get('SECRET'),
+    options
+  )
 };
 
 // UserSchema.methods.sendConfirmation = function() {

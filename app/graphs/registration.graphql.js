@@ -2,6 +2,7 @@ const Registration = /* GraphQL */`
 type Registration {
   id: ID!
   role: OrganisationRole
+  permissions: [String!]!
   joined: Boolean!
   ack: Boolean!
   confirm: Boolean!

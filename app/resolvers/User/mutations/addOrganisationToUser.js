@@ -12,6 +12,14 @@ module.exports = async function(parent, { organisationId }, { currentUserId, loa
     ]);
     if (!user || !organisation) return null;
 
+    user.registration = {
+      id: 1,
+      ack: true,
+      confirm: false,
+      permissions: [],
+      role: null
+    }
+    // return user
     let registration = await models.Registration.findOne({
       "organisation._id": organisationId,
       "user._id": currentUserId,

@@ -10,7 +10,14 @@
   "scripts": {
     "dev": "NODE_PATH='app/' nodemon app/server.js -e js,graphql,json --watch",
     "start": "NODE_PATH='app/' node app/server.js",
-    "lint": "eslint ./app"
+    "dev:worker": "NODE_PATH='app/' nodemon app/worker.js -e js,json --watch",
+    "start:worker": "NODE_PATH='app/' node app/worker.js",
+    "lint": "eslint ./app",
+    "docker:login": "docker login",
+    "docker:qemu": "docker run --rm --privileged multiarch/qemu-user-static:register --reset",
+    "docker:build": "docker build -t gouroujo/communy-server:$(git rev-parse --abbrev-ref HEAD) .",
+    "docker:push": "docker push gouroujo/communy-server:$(git rev-parse --abbrev-ref HEAD)",
+    "deploy": "npm run docker:build && npm run docker:push"
   },
   "dependencies": {
     "axios": "^0.16.2",
@@ -27,10 +34,13 @@
     "graphql-tools": "^1.2.2",
     "helmet": "^3.8.1",
     "jsonwebtoken": "^7.4.3",
+    "juice": "^4.2.2",
     "kue": "^0.11.6",
     "lodash": "^4.17.4",
+    "mailgun-js": "^0.13.1",
     "moment": "^2.18.1",
     "mongoose": "^4.11.9",
+    "mu2": "^0.5.21",
     "nconf": "^0.8.4",
     "sanitize-html": "^1.16.1",
     "shiro-trie": "^0.3.13",

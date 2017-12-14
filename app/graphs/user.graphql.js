@@ -6,12 +6,10 @@ extend type Query {
 
 extend type Mutation {
   editUser (
-    id: ID!
     input: UserInput!
   ): User!
 
   linkFacebookToUser (
-    id: ID!
     input: linkFacebookToUserInput!
   ): User!
 

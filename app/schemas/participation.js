@@ -1,6 +1,6 @@
-const { Schema } = require('mongoose');
+const { Schema } = require('mongoose')
 const { values } = require('lodash')
-const { answers } = require('../dict');
+const { answers } = require('dict')
 
 const ParticipationSchema = new Schema({
   user: {
@@ -38,6 +38,7 @@ const ParticipationSchema = new Schema({
     logo: Number,
   },
   demo: Boolean,
+  confirm: Boolean,
   answer: {
     type: String,
     enum: values(answers).concat([null]),

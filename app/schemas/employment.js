@@ -2,7 +2,7 @@ const { Schema } = require('mongoose');
 const { values } = require('lodash')
 const { roles } = require('dict');
 
-const MembershipSchema = new Schema({
+const EmploymentSchema = new Schema({
   user: {
     _id: {
       type: Schema.Types.ObjectId,
@@ -16,7 +16,7 @@ const MembershipSchema = new Schema({
       index:true,
     },
   },
-  network: {
+  company: {
     _id: {
       type: Schema.Types.ObjectId,
       ref: 'Network',
@@ -24,12 +24,12 @@ const MembershipSchema = new Schema({
     },
     title:  { type: String },
   },
-  confirm: {
+  ack: {
     type: Boolean,
     default: false,
     required: true
   },
-  ack: {
+  deleted: {
     type: Boolean,
     default: false,
     required: true
@@ -43,6 +43,6 @@ const MembershipSchema = new Schema({
   timestamps: true
 });
 
-MembershipSchema.index({ 'user._id': 1, 'network._id': 1 }, { unique: true });
+EmploymentSchema.index({ 'user._id': 1, 'company._id': 1 }, { unique: true });
 
-module.exports = MembershipSchema;
+module.exports = EmploymentSchema;

@@ -10,7 +10,6 @@ const SubMessageSchema = new Schema({
     fullname: {
       type: String,
       trim: true,
-      index: true,
     },
   },
   _id: {

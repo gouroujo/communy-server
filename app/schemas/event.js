@@ -35,6 +35,18 @@ const EventSchema = new Schema({
     title: String,
     cover: Number,
   },
+  participation_level: {
+    type: Number,
+    index: true,
+    required: true,
+    default: 4, // open to all - confirm for public - closed for public (0,1,2) / network (3,4) / members(5,6) ,
+  },
+  visibility_level: {
+    type: Number,
+    index: true,
+    required: true,
+    default: 0, //visible for all / network / member
+  },
   networks: [SubNetworkSchema],
   demo: Boolean,
   nanswers: { type: Number, default: 0 },

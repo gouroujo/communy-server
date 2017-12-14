@@ -1,0 +1,11 @@
+Bienvenue {{user.firstname}} !
+Pour finaliser votre inscription, vous devez cliquer sur le lien ci-dessous:
+
+{{url}}?{{token_name}}={{user.token}}
+
+Nous avons besoin de savoir que cette addresse email est bien la votre pour vous envoyer des informations relatives à votre compte.
+Si vous n'êtes pas à l'orginie de cette action, veuillez ignorer cet email.
+
+Cordialement,
+
+L'équipe de {{sitename}}

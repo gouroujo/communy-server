@@ -1,6 +1,6 @@
 const { Schema } = require('mongoose');
 
-const MembershipSchema = new Schema({
+const PartnershipSchema = new Schema({
   organisation: {
     _id: {
       type: Schema.Types.ObjectId,
@@ -13,7 +13,7 @@ const MembershipSchema = new Schema({
       trim: true,
     },
   },
-  network: {
+  company: {
     _id: {
       type: Schema.Types.ObjectId,
       ref: 'Network',
@@ -25,11 +25,6 @@ const MembershipSchema = new Schema({
       trim: true,
     },
   },
-  confirm: {
-    type: Boolean,
-    default: false,
-    required: true
-  },
   ack: {
     type: Boolean,
     default: false,
@@ -39,6 +34,6 @@ const MembershipSchema = new Schema({
   timestamps: true
 });
 
-MembershipSchema.index({ 'organisation._id': 1, 'network._id': 1 }, { unique: true });
+PartnershipSchema.index({ 'organisation._id': 1, 'company._id': 1 }, { unique: true });
 
-module.exports = MembershipSchema;
+module.exports = PartnershipSchema;

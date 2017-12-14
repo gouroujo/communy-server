@@ -2,24 +2,22 @@ const mb_auth_org = [
   'event_list',
   'event_view',
   'event_answer',
-  'user_list',
   'user_view'
 ];
 const mod_auth_org = mb_auth_org.concat([
+  'user_list',
   'event_delete',
   'event_edit',
   'event_add_user',
-  'add_user'
+  'event_create',
+  'add_user',
+  'set_mod_role'
 ]);
-
-const mb_auth_net = [
-  'event_list',
-  'event_view',
-  'event_answer',
-  'organisation_list'
-];
-const mod_auth_net = mb_auth_net.concat([
-
+const ad_auth_org = mod_auth_org.concat([
+  'remove_user',
+  'edit',
+  'delete',
+  'set_ad_role',
 ]);
 
 module.exports = {
@@ -36,11 +34,6 @@ module.exports = {
   orgPermissions: {
     mb: mb_auth_org,
     mod: mod_auth_org,
-    ad: ['*']
+    ad: ad_auth_org,
   },
-  networkPermissions: {
-    mb: mb_auth_net,
-    mod: mod_auth_net,
-    ad: ['*']
-  }
 }

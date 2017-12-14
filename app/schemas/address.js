@@ -19,5 +19,5 @@ const AddressSchema = new Schema({
   },
 });
 
-AddressSchema.index({ location: '2dsphere' }, { background: true });
+AddressSchema.index({ location: '2dsphere' }, { background: true, sparse: true });
 module.exports = AddressSchema;

@@ -1,8 +1,9 @@
-// const pubsub = require('utils/pubsub');
+const queue = require('utils/queue');
 
-module.exports = async (parent, { input }, { models, logger, config }) => {
+module.exports = async (parent, { input }, { models, logger }) => {
   try {
     let user = await models.User.findOne({ email: input.email }, 'password salt')
+
     if (user) {
       const auth = await user.comparePassword(input.password)
       if (!auth) return null;
@@ -13,18 +14,17 @@ module.exports = async (parent, { input }, { models, logger, config }) => {
         userCreated: true,
       });
 
-      // if (config.get('PUBSUB_TOPIC_EMAIL')) {
-      //   await pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-      //     token: {
-      //       id: user._id
-      //     },
-      //     user: {
-      //       fullname: user.fullname,
-      //       email: user.email,
-      //     },
-      //     subject: 'confirm',
-      //   })
-      // }
+      queue.create('email', {
+        sitename: 'Communy',
+        url: 'https://communy.org',
+        title: 'signin email',
+        template: 'confirm',
+        userId: user._id,
+        token_name: 'confirm_token',
+        token_options: {
+          subject: 'confirm'
+        }
+      }).priority('high').save();
     }
 
     const token = await user.getToken();

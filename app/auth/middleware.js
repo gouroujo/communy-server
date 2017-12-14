@@ -5,12 +5,11 @@ const verifyAsync = require('util').promisify(verify);
 const logger = require('logger');
 const config = require('config');
 const { models } = require('db');
-const { orgPermissions, networkPermissions } = require('dict');
+const { orgPermissions } = require('dict');
 
 module.exports = () => async (req, res, next) => {
   const token = req.headers.authorization || req.body.variables && req.body.variables.token;
-
-  if (!token) return next();
+  if (!token || token === 'null') return next()
   try {
     const payload = await verifyAsync(token, config.get('SECRET'))
     if (!payload) return null;
@@ -25,10 +24,10 @@ module.exports = () => async (req, res, next) => {
         return p.concat(orgPermissions[r.role].map(a => `organisation:${r.organisation._id}:${a}`));
       }, []));
 
-      permissions.add(user.memberships.reduce((p, m) => {
-        if (!m.role || !m.network._id) return p;
-        return p.concat(networkPermissions[m.role].map(a => `network:${m.network._id}:${a}`));
-      }, []));
+      // permissions.add(user.memberships.reduce((p, m) => {
+      //   if (!m.role || !m.network._id) return p;
+      //   return p.concat(networkPermissions[m.role].map(a => `network:${m.network._id}:${a}`));
+      // }, []));
 
     }
     res.locals.auth = permissions;
@@ -36,7 +35,7 @@ module.exports = () => async (req, res, next) => {
 
     next();
   } catch (e) {
-    logger.warn(e);
+    logger.error(e);
     res.sendStatus(401);
   }
 }

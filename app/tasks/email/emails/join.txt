@@ -1,0 +1,25 @@
+Bonjour {{user.fullname}},
+
+Je vous contacte car j’ai entendu parler de {{organisation.prefix}}{{organisation.title}} et de vos très beaux projets.
+Je m'appelle Jonathan, je suis bénévole dans différentes associations depuis plus de 10ans et je souhaite vous aider à développer votre association.
+
+Je suis le fondateur de Communy.org, une plateforme dédiée aux communautés, conçue pour vous aider à gérez votre planning et vos membres.
+Je vous propose une démonstration rapide en cliquant sur le lien ci-dessous:
+
+{{link}}
+
+Il ne vous reste plus qu'à inviter vos bénévoles / membres / volontaires / amis / camarades… et à plannifier vos activités !
+{{message}}
+
+Sur Communy.org vous pouvez également :
+ - Faire gagner de la visibilité à votre communauté pour recruter;
+ - Lancer et récolter un appel à cotisation (en cours de test);
+ - Retrouver votre agenda personnalisé avec toutes vos communautés.
+
+Si vous avez des questions ou des demandes particulières, n'hésitez pas à m'écrire un email: jonathan@communy.org
+En espérant vous retrouver rapidement sur Communy,
+
+Bien amicalement,
+
+Jonathan
+Fondateur de Communy.org

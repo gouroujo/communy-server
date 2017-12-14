@@ -1,9 +1,8 @@
-const { models } = require('db');
-const logger = require('logger');
-const { roles } = require('dict');
-const config = require('config');
-
-// const pubsub = require('utils/pubsub');
+const { models } = require('db')
+const logger = require('logger')
+const { roles } = require('dict')
+const queue = require('utils/queue')
+const config = require('config')
 
 module.exports = async function (parent, { id, input }, { currentUserId, auth, loaders }) {
   if (!auth) return null;
@@ -11,8 +10,6 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
   const date = new Date();
 
   try {
-    // 1 - Get the current user for authoring
-    const currentUser = await loaders.User.load(currentUserId);
     const organisation = await models.Organisation.findById(id);
     if (!organisation) return null;
 
@@ -24,6 +21,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
         },
         update: {
           $setOnInsert: {
+            fullname: (user.firstname || user.lastname) ? `${user.firstname || ''} ${user.lastname || ''}` : user.email,
             email: user.email,
             firstname: user.firstname,
             lastname: user.lastname,
@@ -54,10 +52,8 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
           },
           $setOnInsert: {
             ack: false,
-            "user._id": user._id,
-            "user.fullname": (user.firstname || user.lastname) ? `${user.firstname + ' ' || ''}${user.lastname || ''}` : user.email,
-            "organisation._id": organisation._id,
-            "organisation.title": organisation.title,
+            "user": user.toObject(),
+            "organisation": organisation.toObject(),
             createdAt: date,
           }
         },
@@ -104,10 +100,7 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
             $push: {
               registrations: {
                 _id: registration._id,
-                organisation: {
-                  _id: organisation._id,
-                  title: organisation.title,
-                },
+                organisation: organisation.toObject(),
                 confirm: true,
                 ack: false,
                 role: roles.MEMBER,
@@ -118,30 +111,6 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
       })
     }))
 
-    // if (!config.get('PUBSUB_TOPIC_EMAIL')) {
-    //   logger.info('No pubsub topic defined to send invitation emails. messages not send');
-    // } else {
-    //   await Promise.all([
-    //     users.map(user => pubsub.publishMessage(config.get('PUBSUB_TOPIC_EMAIL'), {
-    //       token: {
-    //         id: user.id,
-    //         organisationId: organisation._id,
-    //       },
-    //       author: (currentUser.firstname || currentUser.lastname) ? `${currentUser.firstname + ' ' || ''}${currentUser.lastname || ''}` : currentUser.email,
-    //       organisation: {
-    //         id: organisation.id,
-    //         title: organisation.title,
-    //       },
-    //       user: {
-    //         fullname: user.fullname,
-    //         email: user.email,
-    //       },
-    //       message: input.message,
-    //       subject: 'invite-organisation',
-    //     }))
-    //   ])
-    // }
-
     const updatedOrganisation = await models.Organisation.findByIdAndUpdate(organisation._id, {
       $inc: {
         nusers: updatedUsers.nModified,
@@ -150,7 +119,25 @@ module.exports = async function (parent, { id, input }, { currentUserId, auth, l
       }
     }, { new: true });
 
-    loaders.Organisation.prime(organisation._id, updatedOrganisation);
+    queue.create('email', {
+      sitename: 'Communy',
+      organisationId: updatedOrganisation._id,
+      url: `${config.get('HOST')}/communities/${updatedOrganisation._id}`,
+      title: `${users.length} invitations à rejoindre ${updatedOrganisation._id}`,
+      template: 'invite',
+      text: input.message,
+      userIds: users.map(u => u._id),
+      authorId: currentUserId,
+      token_name: 'join_token',
+      token_payload: {
+        organisationId: updatedOrganisation._id
+      },
+      token_options: {
+        subject: 'join'
+      }
+    }).save()
+
+    loaders.Organisation.prime(organisation._id, updatedOrganisation.toObject());
     return updatedOrganisation;
 
   } catch (e) {
