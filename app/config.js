@@ -1,55 +1,50 @@
 const nconf = module.exports = require('nconf');
-const path = require('path');
 
 nconf
   // 1. Command-line arguments
   .argv()
   // 2. Environment variables
   .env([
-    'PUBSUB_TOPIC_EMAIL',
     'SITENAME',
     'HOST',
-    'MEMCACHE_URL',
-    'USER_CACHE_LIFETIME',
     'MONGO_URI',
     'REDIS_URI',
     'ENDPOINT_URL',
+    'DEBUG',
     'GRAPHIQL',
     'SECRET',
     'CLOUDINARY_SECRET',
     'CLOUDINARY_KEY',
     'CLOUDINARY_CLOUD',
-    'OPTICS_API_KEY',
+    'ENGINE_API_KEY',
     'OPENCAGE_KEY',
     'ADMIN_PASSWORD',
     'DEFAULT_ORG_ID',
     'NODE_ENV',
-    'PORT'
+    'PORT',
+    'PORT_WORKER',
+    'MAILGUN_KEY',
+    'MAILGUN_DOMAIN'
   ])
   // 3. Config file
-  .file({ file: path.join(__dirname, 'config.json') })
+  .file({ file: './config.json'})
   // 4. Defaults
   .defaults({
-    // This is the id of your project in the Google Cloud Developers Console.
-    GCLOUD_PROJECT: '',
-    USER_CACHE_LIFETIME: 60,
-    MEMCACHE_URL: process.env.GAE_MEMCACHE_HOST ? `${process.env.GAE_MEMCACHE_HOST}:${process.env.GAE_MEMCACHE_PORT}` : 'localhost:11211',
     // MongoDB connection string
     // https://docs.mongodb.org/manual/reference/connection-string/
     MONGO_URI: 'mongodb://localhost:27017/communy',
     REDIS_URI: 'redis://localhost:6379',
-    PORT: 3030,
-    DEBUG: '',
+    PORT: 3000,
+    PORT_WORKER: 8000,
+    DEBUG: false,
     HOST: 'http://localhost:3000',
     SITENAME: 'Communy',
     ENDPOINT_URL: '/graphql',
-    GRAPHIQL: '',
+    GRAPHIQL: false,
     SECRET: 'secret',
     CLOUDINARY_SECRET: '',
     CLOUDINARY_KEY: '',
     CLOUDINARY_CLOUD: '',
-    // OPTICS_API_KEY is required to enable optics analytics on graphql queries and mutations
-    OPTICS_API_KEY: '',
     OPENCAGE_KEY: '',
     ADMIN_PASSWORD: '',
   });

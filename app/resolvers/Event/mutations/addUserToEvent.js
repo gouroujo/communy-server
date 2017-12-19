@@ -4,12 +4,15 @@ module.exports = async (parent, { id, input }, { loaders, auth, currentUserId, m
   try {
     const event = await loaders.Event.load(id);
     if (!event.organisation || !event.organisation._id) throw new Error('Data Corrupted');
+
+    if (!input.userId && !event.open) return null
     if (
       input.userId &&
       input.userId !== currentUserId &&
       !auth.check(`organisation:${event.organisation._id}:event_add_user`)) {
       return null;
     }
+
     if (!auth.check(`organisation:${event.organisation._id}:event_answer`)) {
       return null
     }

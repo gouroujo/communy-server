@@ -1,0 +1,11 @@
+{
+  "apps" : [{
+    "name"        : "worker",
+    "script"      : "./app/worker.js",
+    "instances"   : 1
+  },{
+    "name"       : "server",
+    "script"     : "./app/server.js",
+    "exec_mode"  : "cluster"
+  }]
+}

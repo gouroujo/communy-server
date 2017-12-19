@@ -8,6 +8,9 @@ module.exports = {
   endTime(event, args, { getField }) {
     return getField('endTime', event, 'Event');
   },
+  async open(event, args, { getField }) {
+    return await getField('open', event, 'Event') || null;
+  },
   nanswer(event, params, { getField }) {
     return getField('nanswers', event, 'Event');
   },

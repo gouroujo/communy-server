@@ -1,4 +1,18 @@
 const Registration = /* GraphQL */`
+extend type Query {
+  registration (
+    organisationId: ID!
+    userId: ID!
+  ): Registration
+}
+extend type Mutation {
+  setRoleToRegistration (
+    userId: ID!
+    organisationId: ID!
+    role: OrganisationRole!
+  ): Registration!
+}
+
 type Registration {
   id: ID!
   role: OrganisationRole

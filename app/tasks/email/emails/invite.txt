@@ -1,4 +1,4 @@
-Bonjour {{user.fullname}} !
+Bonjour {{user.firstname}} !
 {{author.fullname}} vous a invité à rejoindre la communauté {{organisation.title}}. Pour accepter l'invitation, vous devez cliquez sur le lien suivant :
 
 {{url}}?{{token_name}}={{user.token}}

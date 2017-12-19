@@ -58,7 +58,7 @@ module.exports = async function (job, done) {
     done()
 
   } catch (e) {
-    logger.error(e)
+    logger.error(`${e.message} : ${e.filename} (${e.lineNumber})`)
     done(e);
   }
 };

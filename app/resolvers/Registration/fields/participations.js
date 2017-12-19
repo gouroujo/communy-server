@@ -8,7 +8,7 @@ module.exports = async (registration, { before, after, limit, offset, answer, an
 
     if (user._id === currentUserId) {
       query.where('user._id').equals(currentUserId);
-    } else if (organisation && auth.check(`organisation:${organisation._id}:event_add_user`)) {
+    } else if (organisation && auth.check(`organisation:${organisation._id}:list_participations`)) {
       query.where('user._id').equals(user._id);
     } else {
       return []

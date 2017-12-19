@@ -35,7 +35,7 @@ module.exports = () => async (req, res, next) => {
 
     next();
   } catch (e) {
-    logger.error(e);
-    res.sendStatus(401);
+    logger.warn(`Authentication Error: ${e.message}`,e);
+    next()
   }
 }

@@ -1,7 +1,7 @@
 const geocoder = require('utils/geocoder');
 const db = require('db');
 
-module.exports = async (parent, { input, organisationId }, { auth, language, models, logger }) => {
+module.exports = async (parent, { input, organisationId }, { currentUserId, auth, language, models, logger }) => {
   if (!auth) return null;
   if (!auth.check(`organisation:${organisationId}:event_create`)) return null;
 
@@ -36,8 +36,7 @@ module.exports = async (parent, { input, organisationId }, { auth, language, mod
 
     return events[0]
   } catch (e) {
-    console.log(e)
-    logger.error(e);
+    logger.error(`mutation createEvent (userId: ${currentUserId}): ${e.message}`, e)
     return null;
   }
 

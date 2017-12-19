@@ -1,0 +1,27 @@
+{"name":"MongoError","message":"Authentication failed.","ok":0,"errmsg":"Authentication failed.","code":18,"codeName":"AuthenticationFailed","level":"error"}
+{"name":"MongoError","message":"Authentication failed.","ok":0,"errmsg":"Authentication failed.","code":18,"codeName":"AuthenticationFailed","level":"error"}
+{"message":"Mongo Connection : Authentication failed.","level":"error"}
+{"name":"MongoError","message":"Authentication failed.","ok":0,"errmsg":"Authentication failed.","code":18,"codeName":"AuthenticationFailed","level":"error"}
+{"name":"MongoError","message":"Authentication failed.","ok":0,"errmsg":"Authentication failed.","code":18,"codeName":"AuthenticationFailed","level":"error"}
+{"message":"Running a GraphQL API server at localhost:3030/graphql","level":"info"}
+{"message":"Successfully connected to MongoDB","level":"info"}
+{"message":"Running a GraphQL API server at localhost:3030/graphql","level":"info"}
+{"message":"Successfully connected to MongoDB","level":"info"}
+{"message":"Running a GraphQL API server at localhost:3030/graphql","level":"info"}
+{"message":"Successfully connected to MongoDB","level":"info"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}
+{"level":"error"}

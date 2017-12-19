@@ -47,6 +47,10 @@ const EventSchema = new Schema({
     required: true,
     default: 0, //visible for all / network / member
   },
+  open: {
+    type: Boolean,
+    default: true
+  },
   networks: [SubNetworkSchema],
   demo: Boolean,
   nanswers: { type: Number, default: 0 },

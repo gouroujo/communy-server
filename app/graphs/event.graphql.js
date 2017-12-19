@@ -19,7 +19,7 @@ extend type Query {
 
 extend type Mutation {
   createEvent (
-    input: EventInput!
+    input: EventCreateInput!
     organisationId: ID!
   ): Event!
 
@@ -29,7 +29,7 @@ extend type Mutation {
 
   editEvent (
     id: ID!
-    input: EventInput!
+    input: EventEditInput!
   ): Event!
 
   addUserToEvent (
@@ -49,6 +49,7 @@ type Event {
 
   duration: String!
   allDay: Boolean
+  open: Boolean!
   organisation: Organisation!
 
   nanswer: Int
@@ -77,13 +78,23 @@ type Event {
   ): [Network!]
 }
 
-input EventInput {
+input EventCreateInput {
   title: String!
   description: String
   address: AddressInput
   parts: [EventPartInput!]!
   networkIds: [ID!]
   allNetwork: Boolean
+  open: Boolean
+}
+input EventEditInput {
+  title: String
+  description: String
+  address: AddressInput
+  parts: [EventPartInput!]
+  networkIds: [ID!]
+  allNetwork: Boolean
+  open: Boolean
 }
 
 input EventPartInput {

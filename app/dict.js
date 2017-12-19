@@ -11,13 +11,18 @@ const mod_auth_org = mb_auth_org.concat([
   'event_add_user',
   'event_create',
   'add_user',
-  'set_mod_role'
+  'set_mod_role',
+  'set_mb_role',
+  'list_participations',
+  // 'mailings'
 ]);
 const ad_auth_org = mod_auth_org.concat([
   'remove_user',
   'edit',
   'delete',
   'set_ad_role',
+  'upload_cover',
+  'upload_logo'
 ]);
 
 module.exports = {

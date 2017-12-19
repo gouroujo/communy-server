@@ -34,14 +34,29 @@ const db = {
   mongoose: mongoose,
 }
 
-if (config.get('DEBUG') === 1){
+if (config.get('DEBUG')) {
+  logger.debug("DEBUG mode is on")
   db.mongoose.set('debug', true)
+} else {
+  db.mongoose.set('debug', false)
 }
+// mongoose.set('debug', function (coll, method, query, doc) {
+//   console.log(coll, method, query, doc)
+// });
 
-db.mongoose.connect(config.get('MONGO_URI'), { useMongoClient: true }, (err) => {
-  if (err) throw err;
-  logger.info('Successfully connected to MongoDB');
-});
-
+logger.debug(`Trying to connect to mongo on ${config.get('MONGO_URI')}`)
+db.mongoose.connect(config.get('MONGO_URI'), {
+  useMongoClient: true,
+  reconnectTries: Number.MAX_VALUE,
+  reconnectInterval: 1000,
+  keepAlive: 1,
+  connectTimeoutMS: 30000
+})
+.then(() => {
+  logger.info('Successfully connected to MongoDB')
+})
+.catch(e => {
+  logger.error(`Mongo Connection : ${e.message}`)
+})
 
 module.exports = db

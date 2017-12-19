@@ -11,7 +11,7 @@ const queue = config.get('REDIS_URI') ? kue.createQueue({
 
 if (config.get('REDIS_URI')) {
   queue.on('job enqueue', (id, type) => {
-    logger.info('Job %s got queued of type %s', id, type );
+    logger.info(`Job ${id} got queued of type ${type}`);
   })
 }
 

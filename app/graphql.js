@@ -1,6 +1,5 @@
 const { graphqlExpress } = require('graphql-server-express');
 const { makeExecutableSchema } = require('graphql-tools');
-// const OpticsAgent = require('optics-agent');
 
 const config = require('config');
 const createLoaders = require('loaders');
@@ -25,17 +24,14 @@ const executableSchema = makeExecutableSchema({
   resolvers: require('./resolvers'),
 });
 
-// if (config.get('OPTICS_API_KEY')) {
-//   OpticsAgent.instrumentSchema(executableSchema)
-// }
-
 module.exports = graphqlExpress((req, res) => {
   const loaders = createLoaders(res.locals.userId)
   return {
     schema: executableSchema,
+    tracing: true,
+    cacheControl: true,
     context: {
       res,
-      // opticsContext: config.get('OPTICS_API_KEY') ? OpticsAgent.context(req) : null,
       logger: logger,
       config: config,
       models: db.models,
@@ -49,20 +45,21 @@ module.exports = graphqlExpress((req, res) => {
           .then(loaded => loaded[fieldName])
           .then(field => {
             if (!parent.demo) return field;
-            if (typeof field === 'object') return Object.assign(field, { demo: true })
+            if (field && typeof field === 'object') return Object.assign(field, { demo: true })
             return field;
           })
           .catch(e => {
-            logger.error(e);
+            logger.error(`Error in getField (field: ${fieldName}, loader: ${loader}) : ${e.message}`, parent);
             return null
           })
       },
+
       // formatError: err => {
       //   if (err.originalError && err.originalError.data && err.originalError.data.statusCode) {
       //     res.status(err.originalError.data.statusCode);
       //   }
       //   return formatError(err)
       // }
-    }
+    },
   }
 })

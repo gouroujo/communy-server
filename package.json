@@ -20,6 +20,7 @@
     "deploy": "npm run docker:build && npm run docker:push"
   },
   "dependencies": {
+    "apollo-engine": "^0.7.0",
     "axios": "^0.16.2",
     "body-parser": "^1.17.2",
     "cloudinary": "^1.9.0",
